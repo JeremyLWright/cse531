@@ -3,7 +3,9 @@
 #include "TCB.h"
 
 typedef struct _Q {
+    int data;
 } Q;
+
 void InitQ (Q* q)  //Note that if Q is a head pointer to the queue, then InitQ will have to be passed &Q.
 {
 }
@@ -12,15 +14,16 @@ void AddQ(Q* q, int *item)
 {
 }
 
-void DelQ(Q* q) // will return a pointer to the item deleted.
+Q* DelQ(Q* q) // will return a pointer to the item deleted.
 {
+    return 0;
 }
 
 void RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
 {
 }
 
-bool t()
+size_t _size(Q* q)
 {
-    return true;
+    return 0;
 }

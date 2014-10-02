@@ -4,8 +4,19 @@ extern "C" {
 
 
 #include <gtest/gtest.h>
+#include <vector>
 
-TEST(One, Two)
+std::vector<int> model;
+
+TEST(ModelBased, QueueSize)
 {
-    ASSERT_TRUE(t());
+    Q q;
+    InitQ(&q);
+
+    model.push_back(0);
+    AddQ(&q, 0);
+
+    ASSERT_EQ(model.size(), _size(&q));
 }
+
+
