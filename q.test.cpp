@@ -11,6 +11,7 @@ extern "C" {
 #include <chrono>
 #include <limits>
 
+#if 0
 std::vector<int> model;
 
 template <typename T, typename L>
@@ -64,25 +65,48 @@ TEST(ModelBased, QueueSize)
     run_model(u, verifier);
 }
 
-TEST(Directed, Add)
+#endif
+class Directed : public ::testing::Test 
 {
-    Q q;
-    InitQ(&q);
-    for(int i = 0; i < 100; ++i)
+    protected:
+        virtual void SetUp()
+        {
+            InitQ(&q);
+        }
+
+        virtual void TearDown()
+        {
+            FreeQ(&q);
+        }
+
+        Q q;
+};
+
+TEST_F(Directed, Add)
+{
+    for(int i = 1; i < 100; ++i)
     {
-        Item* t = new Item(); //I hate C interfaces!
-        t->t = i;
-        AddQ(&q, t);
+        std::cout << "i: " << i << '\n';
+        AddQ(&q, &i);
+        //ASSERT_EQ(i, *PeekQ(&q));
+        //ASSERT_EQ(i, size_(&q));
     }
-    ASSERT_EQ(100, _size(&q));
-    for(int i = 0; i < 100; ++i)
+    ASSERT_EQ(99, size_(&q));
+    for(int i = 1; i < 100; ++i)
     {
-        ASSERT_EQ(DelQ(&q)->t, i);
+        ASSERT_EQ(i, *DelQ(&q));
     }
-    ASSERT_EQ(0, _size(&q));
+    ASSERT_EQ(0, size_(&q));
 }
 
-TEST(Directed, DeleteEmpty)
+TEST_F(Directed, PutGet)
+{
+    int i = 8;
+    AddQ(&q, &i);
+    ASSERT_EQ(8, *DelQ(&q));
+}
+
+TEST_F(Directed, DeleteEmpty)
 {
     Q q;
     InitQ(&q);
