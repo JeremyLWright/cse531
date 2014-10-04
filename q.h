@@ -6,17 +6,19 @@
 
 
 typedef int list_parameter_t;
-
-
-// - head != tail
-// - curr == head, queue is empty
-// - curr == tail, queue is full
+// Head    read            write                 Tail
+// V       V -> reads ->   V  -> writes ->        V   
+// [ -------------- ---------- --------- -------- ]
 typedef struct _Q {
     list_parameter_t* head = 0;
     list_parameter_t* tail = 0;
     list_parameter_t* curr_read = 0;
     list_parameter_t* curr_write = 0;
+    size_t size = 0;
 } Q;
+
+
+
 
 
 size_t const start_size = 8;
@@ -24,7 +26,7 @@ size_t const growth_factor = 2;
 
 size_t size_(Q* q)
 {
-    return (q->curr_write - q->curr_read);
+    return (q->size);
 }
 
 size_t reserved_(Q* q)
@@ -39,6 +41,7 @@ void InitQ_(Q* q, size_t init_size)
     q->tail = (q->head)+init_size;
     q->curr_write = q->head;
     q->curr_read = q->head;
+    q->size = 0;
 }
 
 void InitQ (Q* q)  //Note that if Q is a head pointer to the queue, then InitQ will have to be passed &Q.
@@ -48,42 +51,44 @@ void InitQ (Q* q)  //Note that if Q is a head pointer to the queue, then InitQ w
 
 void AddQ(Q* q, list_parameter_t const * item)
 {
-    //are we full?
+    //are we at the end?
     if(q->curr_write == q->tail)
     {
+        q->curr_write = q->head;
+    }
+
+    //are we full?
+    if(q->size == reserved_(q))
+    {
         //We need to realloc
-        size_t curr_size = size_(q);
         size_t new_size = reserved_(q)*growth_factor;
-        printf("Growing...%p, %lu, %lu\n", q->head, curr_size, new_size);
         Q old_q = *q;
+        printf("Growing...%p, %lu, %lu\n", q->head, old_q.size, new_size);
         InitQ_(q, new_size);
-        memcpy(q->head, old_q.head, curr_size);
-        q->curr_write = q->head + curr_size;
-        q->curr_read = q->head + (old_q.curr_read - old_q.head);
+        memcpy(q->head, old_q.curr_read, (old_q.size)*sizeof(list_parameter_t));
+        q->curr_write = q->head + old_q.size;
+        q->size = old_q.size;
         free(old_q.head);
     }
     memcpy(q->curr_write, item, sizeof(list_parameter_t));
-    ++(q->curr_write);
+    ++q->curr_write;
+    ++q->size;
 }
 
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
 {
     //Are we empty?
-    if(q->curr_write == q->head)
+    if(q->size == 0)
     {
         return 0;
     }
-    return --q->curr_write;
+    --q->size;
+    return q->curr_read++;
 }
 
 list_parameter_t* PeekQ(Q* q) // will return a pointer to the item deleted.
 {
-    //Are we empty?
-    if(q->curr_write == q->head)
-    {
-        return 0;
-    }
-    return (q->curr_write-1);
+    return q->curr_read;
 }
 
 void FreeQ(Q* q)

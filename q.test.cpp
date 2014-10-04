@@ -88,8 +88,7 @@ TEST_F(Directed, Add)
     {
         std::cout << "i: " << i << '\n';
         AddQ(&q, &i);
-        //ASSERT_EQ(i, *PeekQ(&q));
-        //ASSERT_EQ(i, size_(&q));
+        ASSERT_EQ(i, size_(&q));
     }
     ASSERT_EQ(99, size_(&q));
     for(int i = 1; i < 100; ++i)
