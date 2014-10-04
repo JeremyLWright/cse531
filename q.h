@@ -19,21 +19,39 @@ typedef struct _Q {
 
 size_t const start_size = 8;
 size_t const growth_factor = 2;
-
-size_t size_(Q* q)
+size_t size_(Q const * q)
 {
     return (q->size);
 }
 
-size_t reserved_(Q* q)
+size_t reserved_(Q const* q)
 {
     return (q->tail - q->head);
 }
+void print_state_(Q const * q, char const * tag)
+{
+#if 0
+    printf("%s\t{head = %p, tail = %p, curr_read = %p, curr_write = %p, size = %lu}\n",
+            tag,
+            q->head,
+            q->tail,
+            q->curr_read,
+            q->curr_write,
+            q->size);
+    printf("{");
+    for(size_t i = 0; i < reserved_(q); ++i)
+    {
+        printf("%d,", q->head[i]);
+    }
+    printf("}\n");
+#endif
+}
+
 
 void InitQ_(Q* q, size_t init_size)
 {
     q->head = (list_parameter_t*)malloc(init_size*sizeof(list_parameter_t));
-    bzero(q->head, init_size);
+    bzero(q->head, init_size*sizeof(list_parameter_t));
     q->tail = (q->head)+init_size;
     q->curr_write = q->head;
     q->curr_read = q->head;
@@ -43,6 +61,26 @@ void InitQ_(Q* q, size_t init_size)
 void InitQ (Q* q)  //Note that if Q is a head pointer to the queue, then InitQ will have to be passed &Q.
 {
     InitQ_(q, start_size);
+}
+
+void compact_(Q* q, Q* old_q)
+{
+    // Case: head - read - write - tail;
+    if(old_q->curr_read < old_q->curr_write)
+    {
+        memcpy(q->head, old_q->curr_read, (old_q->curr_write - old_q->curr_read)*sizeof(list_parameter_t));
+    }
+    // Case: head - write - read - tail;
+    else
+    {
+        size_t read_to_tail = (old_q->tail - old_q->curr_read);
+        size_t head_to_read = (old_q->curr_read - old_q->head);
+        memcpy(q->head, old_q->curr_read, read_to_tail*sizeof(list_parameter_t));
+        memcpy(q->head+read_to_tail, old_q->head, head_to_read*sizeof(list_parameter_t));
+    }
+    q->curr_write = q->head + old_q->size;
+    q->size = old_q->size;
+    free(old_q->head);
 }
 
 void AddQ(Q* q, list_parameter_t const * item)
@@ -61,28 +99,12 @@ void AddQ(Q* q, list_parameter_t const * item)
         Q old_q = *q;
         //printf("Growing...%p, %lu, %lu\n", q->head, old_q.size, new_size);
         InitQ_(q, new_size);
-
-        // Case: head - read - write - tail;
-        if(old_q.curr_read < old_q.curr_write)
-        {
-            memcpy(q->head, old_q.curr_read, (old_q.curr_write - old_q.curr_read)*sizeof(list_parameter_t));
-        }
-        // Case: head - write - read - tail;
-        else
-        {
-            size_t read_to_tail = (old_q.tail - old_q.curr_read);
-            size_t head_to_read = (old_q.curr_read - old_q.head);
-            memcpy(q->head, old_q.curr_read, read_to_tail*sizeof(list_parameter_t));
-            memcpy(q->head+read_to_tail, old_q.head, head_to_read*sizeof(list_parameter_t));
-        }
-        q->curr_write = q->head + old_q.size;
-        q->size = old_q.size;
-        free(old_q.head);
+        compact_(q, &old_q);
     }
     memcpy(q->curr_write, item, sizeof(list_parameter_t));
     ++q->curr_write;
     ++q->size;
-    //printf("PostAdd: %lu\n", q->size);
+    print_state_(q, "Add");
 }
 
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
@@ -98,7 +120,7 @@ list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
         q->curr_read = q->head;
     }
     --q->size;
-    //printf("PostDel: %lu\n", q->size);
+    print_state_(q, "Del");
     return q->curr_read++;
 }
 
@@ -118,6 +140,8 @@ void FreeQ(Q* q)
 
 void RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
 {
+    if(q->size == 0)
+        return;
     AddQ(q, DelQ(q));
 }
 

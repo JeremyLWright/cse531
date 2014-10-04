@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_CXX_FLAGS "-Wall -Werror -std=gnu++0x")
-set(CMAKE_CXX_FLAGS_DEBUG "-pg -g3 -ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "-pg -g3 -ggdb -fprofile-arcs -ftest-coverage")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 include_directories(.)
 

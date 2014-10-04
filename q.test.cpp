@@ -38,24 +38,32 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts, D dist, RNG entr
     std::deque<int> model;
     auto result(true);
 
+   // std::cout << "Inserting\n";
     for(auto n = 0; n < ninserts; ++n)
     {
         auto d = dist(entropy);
         model.push_back(d);
         AddQ(&q, &d);
     }
+    if(size_(&q) != model.size()) return false;
+
+    //std::cout << "Deleting\n";
     for(auto n = 0; n < npops; ++n)
     {
-        model.pop_front();
+        if(model.size() > 0) model.pop_front(); //Delete from empty deque is undefined behavior! Fucking Compiler!
         DelQ(&q);
     }
+    
+    //std::cout << "Inserting\n";
     for(auto n = 0; n < nreinserts; ++n)
     {
         auto d = dist(entropy);
         model.push_back(d);
         AddQ(&q, &d);
     }
+    if(size_(&q) != model.size()) return false;
     
+    //std::cout << "Comparing\n";
     for(auto r : model)
     {
         auto u = DelQ(&q);
@@ -69,6 +77,7 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts, D dist, RNG entr
         else
         {
 
+         //   std::cout << "Actual: " << r << " Expected: " << *u <<'\n';
         if(r != *u)
         {
             result = false;
@@ -202,10 +211,33 @@ TEST_F(Directed, PutGet)
 
 TEST_F(Directed, DeleteEmpty)
 {
-    Q q;
     InitQ(&q);
-
     DelQ(&q);
+    RotateQ(&q);
+    int i = 9;
+    AddQ(&q, &i);
+    RotateQ(&q);
+}
+
+TEST_F(Directed, Compact)
+{
+    int i;
+    i = 0;
+    AddQ(&q, &i);
+    EXPECT_EQ(0, *PeekQ(&q));
+    EXPECT_EQ(q.head, q.curr_read);
+    DelQ(&q);
+    DelQ(&q);
+    EXPECT_EQ(q.head+1, q.curr_read);
+    i = 1;
+    AddQ(&q, &i);
+    i = 2;
+    AddQ(&q, &i);
+    ASSERT_EQ(1, *q.curr_read);
+    ASSERT_EQ(2, *(q.curr_read+1));
+    ASSERT_EQ(1, *DelQ(&q));
+    ASSERT_EQ(2, *DelQ(&q));
+
 }
 
 
