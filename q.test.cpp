@@ -4,68 +4,84 @@ extern "C" {
 
 
 #include <gtest/gtest.h>
-#include <vector>
+#include <queue>
 #include <functional>
 #include <algorithm>
 #include <random>
 #include <chrono>
 #include <limits>
+#include <iterator>
 
-#if 0
-std::vector<int> model;
-
-template <typename T, typename L>
-void minimize(T& api, L& log)
+class Model : public ::testing::Test 
 {
-    std::cerr << "Failing Test Case: \n";
-//    for(auto& f: api)
-//    {
-//        //std::cerr << "Call: " << f.first << " input=" << log[0]  << '\n';
-//    }
-    FAIL();
-}
+    protected:
+        virtual void SetUp()
+        {
+            InitQ(&q);
+            auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+            rng.seed(seed);
+        }
 
-template <typename T, typename Fn>
-void run_model(T& api, Fn verifier)
+        virtual void TearDown()
+        {
+            FreeQ(&q);
+        }
+
+        Q q;
+        std::queue<int> model;
+        std::mt19937 rng;
+};
+
+TEST_F(Model, TheIDontHaveAllFuckingDaySoMakeTheComputerDoMyHomeworkTest)
 {
-    std::uniform_int_distribution<int> dist(std::numeric_limits<int>::min(),std::numeric_limits<int>::max());
-    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::mt19937 rng(seed);
-    std::shuffle (std::begin(api), std::end(api), rng);
-    std::vector<int> input_log;
-    for(auto& f : api)
+    std::uniform_int_distribution<int> datum(
+            std::numeric_limits<int>::min(),
+            std::numeric_limits<int>::max());
+    std::uniform_int_distribution<int> ntests(0, 1000);
+
+    //Generate a random number of inserts
+    auto const ninserts = ntests(rng);
+
+    for(auto n = 0; n < ninserts; ++n)
     {
-        auto i = dist(rng);
-        input_log.push_back(i);
-        f.first(i);
-        f.second(i);
-        if(!verifier()) {minimize(api, input_log);}
+        auto r = ntests(rng);
+        model.push(r);
+        AddQ(&q, &r);
+    }
+
+    //Generate a random number of reads/pops
+    auto const npops = ntests(rng);
+    for(auto n = 0; n < npops; ++n)
+    {
+        model.pop();
+        DelQ(&q);
+    }
+    
+    //Generate a random number of more inserts to verify circular
+    //dynamic functionality.  Verify we can write, read, write and read
+    //again in any amount.
+    auto const nreinserts = ntests(rng);
+    for(auto n = 0; n < nreinserts; ++n)
+    {
+        auto r = datum(rng);
+        model.push(r);
+        AddQ(&q, &r);
+    }
+
+    //Verify from the model
+    for(auto r = model.front(); r != model.back(); ++r)
+    {
+        if(r != *DelQ(&q))
+        {
+            std::cout << "Test Failed:\n"
+                << "\tInserts: " << ninserts << '\n'
+                << "\tDeletes: " << npops << '\n'
+                << "\tReinserts: " << nreinserts << '\n';
+            FAIL();
+        }
     }
 }
 
-TEST(ModelBased, QueueSize)
-{
-    Q q;
-    InitQ(&q);
-
-    std::pair<std::function<void(int)>, std::function<void(int)>> uut_api_add;
-
-    uut_api_add.first = [&](int i){ model.push_back(i); };
-    uut_api_add.second = [&](int i){ Item t; t.t = i;  AddQ(&q, &t); };
-
-    std::pair<std::function<void(int)>, std::function<void(int)>> uut_api_remove;
-
-    uut_api_remove.first = [&](int i){model.push_back(i); };
-    uut_api_remove.second = [&](int i){ Item t; t.t = i; AddQ(&q, &t); };
-
-    auto verifier = [&](){ return model.size() == _size(&q);};
-
-
-    std::vector<std::pair<std::function<void(int)>, std::function<void(int)>>> u{uut_api_add, uut_api_remove};
-    run_model(u, verifier);
-}
-
-#endif
 class Directed : public ::testing::Test 
 {
     protected:
@@ -86,7 +102,6 @@ TEST_F(Directed, Add)
 {
     for(int i = 1; i < 100; ++i)
     {
-        std::cout << "i: " << i << '\n';
         AddQ(&q, &i);
         ASSERT_EQ(i, size_(&q));
     }

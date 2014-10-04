@@ -63,7 +63,7 @@ void AddQ(Q* q, list_parameter_t const * item)
         //We need to realloc
         size_t new_size = reserved_(q)*growth_factor;
         Q old_q = *q;
-        printf("Growing...%p, %lu, %lu\n", q->head, old_q.size, new_size);
+        //printf("Growing...%p, %lu, %lu\n", q->head, old_q.size, new_size);
         InitQ_(q, new_size);
         memcpy(q->head, old_q.curr_read, (old_q.size)*sizeof(list_parameter_t));
         q->curr_write = q->head + old_q.size;
