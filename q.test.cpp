@@ -58,12 +58,28 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts, D dist, RNG entr
     
     for(auto r : model)
     {
-        auto u = *DelQ(&q);
-        //std::cout << "Actual: " << r << " Expected: " << u <<'\n';
-
-        if(r != u)
+        auto u = DelQ(&q);
+        if(u == 0)
         {
             result = false;
+#if 0
+            std::cout << "Queue Ended Early.\n";
+#endif
+        }
+        else
+        {
+
+        if(r != *u)
+        {
+            result = false;
+#if 0
+            std::cout << "Actual: " << r << " Expected: " << *u <<'\n';
+            std::cout << "Test:\n"
+                << "\tInserts: " << ninserts << '\n'
+                << "\tDeletes: " << npops << '\n'
+                << "\tReinserts: " << nreinserts << '\n';
+#endif
+        }
         }
     }
     FreeQ(&q);
@@ -147,7 +163,7 @@ TEST_F(Directed, RandomMinimizedTest)
 }
 TEST_F(Directed, Weirdness)
 {
-    ASSERT_TRUE(run_isolated_test(10240, 0, 0)); //10 straight inserts don't fail, but 1 and 9 do.
+    ASSERT_TRUE(run_isolated_test(10240, 0, 0)); 
 }
 TEST_F(Directed, RandomMinimizedTest2)
 {
@@ -156,6 +172,10 @@ TEST_F(Directed, RandomMinimizedTest2)
 TEST_F(Directed, RandomMinimizedTest3)
 {
     ASSERT_TRUE(run_isolated_test(1, 1, 9));
+}
+TEST_F(Directed, RandomMinimizedTest4)
+{
+    ASSERT_TRUE(run_isolated_test(1, 2, 2));
 }
 
 TEST_F(Directed, Add)
