@@ -4,7 +4,7 @@ extern "C" {
 
 
 #include <gtest/gtest.h>
-#include <queue>
+#include <deque>
 #include <functional>
 #include <algorithm>
 #include <random>
@@ -17,68 +17,97 @@ class Model : public ::testing::Test
     protected:
         virtual void SetUp()
         {
-            InitQ(&q);
             auto seed = std::chrono::system_clock::now().time_since_epoch().count();
             rng.seed(seed);
         }
 
         virtual void TearDown()
         {
-            FreeQ(&q);
         }
 
-        Q q;
-        std::queue<int> model;
         std::mt19937 rng;
 };
 
-TEST_F(Model, TheIDontHaveAllFuckingDaySoMakeTheComputerDoMyHomeworkTest)
+bool run_isolated_test(int ninserts, int npops, int nreinserts)
 {
-    std::uniform_int_distribution<int> datum(
-            std::numeric_limits<int>::min(),
-            std::numeric_limits<int>::max());
-    std::uniform_int_distribution<int> ntests(0, 1000);
-
-    //Generate a random number of inserts
-    auto const ninserts = ntests(rng);
+    Q q;
+    InitQ(&q);
+    std::deque<int> model;
+    auto result(true);
 
     for(auto n = 0; n < ninserts; ++n)
     {
-        auto r = ntests(rng);
-        model.push(r);
-        AddQ(&q, &r);
+        model.push_back(n);
+        AddQ(&q, &n);
     }
-
-    //Generate a random number of reads/pops
-    auto const npops = ntests(rng);
     for(auto n = 0; n < npops; ++n)
     {
-        model.pop();
+        model.pop_front();
         DelQ(&q);
     }
-    
+    for(auto n = 0; n < nreinserts; ++n)
+    {
+        model.push_back(n);
+        AddQ(&q, &n);
+    }
+    for(auto r : model)
+    {
+        auto u = *DelQ(&q);
+
+        if(r != u)
+        {
+            result = false;
+        }
+    }
+    FreeQ(&q);
+    return result;
+}
+
+TEST_F(Model, TheIDontHaveAllFuckingDaySoMakeTheComputerDoMyHomeworkTest)
+{
+    std::uniform_int_distribution<int> ntests(0, 1000);
+
+    //Generate a random number of inserts
+    auto ninserts = ntests(rng);
+
+
+    //Generate a random number of reads/pops
+    auto npops = ntests(rng);
+
     //Generate a random number of more inserts to verify circular
     //dynamic functionality.  Verify we can write, read, write and read
     //again in any amount.
-    auto const nreinserts = ntests(rng);
-    for(auto n = 0; n < nreinserts; ++n)
-    {
-        auto r = datum(rng);
-        model.push(r);
-        AddQ(&q, &r);
-    }
+    auto nreinserts = ntests(rng);
 
+     std::cout << "Test:\n"
+    << "\tInserts: " << ninserts << '\n'
+    << "\tDeletes: " << npops << '\n'
+    << "\tReinserts: " << nreinserts << '\n';
     //Verify from the model
-    for(auto r = model.front(); r != model.back(); ++r)
+    if(!run_isolated_test(ninserts, npops, nreinserts))
     {
-        if(r != *DelQ(&q))
+        std::cout << "Test Failed, minimizing.\n";
+        while(ninserts > 0 && run_isolated_test(ninserts, npops, nreinserts) == false)
         {
-            std::cout << "Test Failed:\n"
-                << "\tInserts: " << ninserts << '\n'
-                << "\tDeletes: " << npops << '\n'
-                << "\tReinserts: " << nreinserts << '\n';
-            FAIL();
+            --ninserts;
         }
+        ++ninserts; //Make it fail again.
+        while(npops > 0 && run_isolated_test(ninserts, npops, nreinserts) == false)
+        {
+            --npops;
+        }
+        ++npops; //Make it fail again.
+        while(nreinserts > 0 && run_isolated_test(ninserts, npops, nreinserts) == false)
+        {
+            --nreinserts;
+        }
+        ++nreinserts; //Make it fail again.
+
+        ADD_FAILURE();
+        std::cout << "Test:\n"
+            << "\tInserts: " << ninserts << '\n'
+            << "\tDeletes: " << npops << '\n'
+            << "\tReinserts: " << nreinserts << '\n';
     }
 }
 
@@ -97,6 +126,19 @@ class Directed : public ::testing::Test
 
         Q q;
 };
+
+TEST_F(Directed, RandomMinimizedTest)
+{
+    ASSERT_TRUE(run_isolated_test(1, 0, 9)); //Random test generator found this test case
+}
+TEST_F(Directed, Weirdness)
+{
+    ASSERT_TRUE(run_isolated_test(10, 0, 0)); //10 straight inserts don't fail, but 1 and 9 do.
+}
+TEST_F(Directed, RandomMinimizedTest2)
+{
+    ASSERT_TRUE(run_isolated_test(1, 1, 8));
+}
 
 TEST_F(Directed, Add)
 {
