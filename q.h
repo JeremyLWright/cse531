@@ -17,10 +17,6 @@ typedef struct _Q {
     size_t size = 0;
 } Q;
 
-
-
-
-
 size_t const start_size = 8;
 size_t const growth_factor = 2;
 
@@ -73,16 +69,23 @@ void AddQ(Q* q, list_parameter_t const * item)
     memcpy(q->curr_write, item, sizeof(list_parameter_t));
     ++q->curr_write;
     ++q->size;
+    //printf("PostAdd: %lu\n", q->size);
 }
 
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
 {
     //Are we empty?
     if(q->size == 0)
-    {
+    {   
+        //printf("Zero.\n");
         return 0;
     }
+    if(q->curr_read == q->tail)
+    {
+        q->curr_read = q->head;
+    }
     --q->size;
+    //printf("PostDel: %lu\n", q->size);
     return q->curr_read++;
 }
 

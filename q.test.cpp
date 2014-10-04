@@ -50,9 +50,11 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts)
         model.push_back(n);
         AddQ(&q, &n);
     }
+    
     for(auto r : model)
     {
         auto u = *DelQ(&q);
+        //std::cout << "Actual: " << r << " Expected: " << u <<'\n';
 
         if(r != u)
         {
@@ -133,7 +135,7 @@ TEST_F(Directed, RandomMinimizedTest)
 }
 TEST_F(Directed, Weirdness)
 {
-    ASSERT_TRUE(run_isolated_test(10, 0, 0)); //10 straight inserts don't fail, but 1 and 9 do.
+    ASSERT_TRUE(run_isolated_test(10240, 0, 0)); //10 straight inserts don't fail, but 1 and 9 do.
 }
 TEST_F(Directed, RandomMinimizedTest2)
 {
