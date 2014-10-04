@@ -61,7 +61,20 @@ void AddQ(Q* q, list_parameter_t const * item)
         Q old_q = *q;
         //printf("Growing...%p, %lu, %lu\n", q->head, old_q.size, new_size);
         InitQ_(q, new_size);
-        memcpy(q->head, old_q.curr_read, (old_q.size)*sizeof(list_parameter_t));
+
+        // Case: head - read - write - tail;
+        if(old_q.curr_read < old_q.curr_write)
+        {
+            memcpy(q->head, old_q.curr_read, (old_q.curr_write - old_q.curr_read)*sizeof(list_parameter_t));
+        }
+        // Case: head - write - read - tail;
+        else
+        {
+            size_t read_to_tail = (old_q.tail - old_q.curr_read);
+            size_t head_to_read = (old_q.curr_read - old_q.head);
+            memcpy(q->head, old_q.curr_read, read_to_tail*sizeof(list_parameter_t));
+            memcpy(q->head+read_to_tail, old_q.head, head_to_read*sizeof(list_parameter_t));
+        }
         q->curr_write = q->head + old_q.size;
         q->size = old_q.size;
         free(old_q.head);

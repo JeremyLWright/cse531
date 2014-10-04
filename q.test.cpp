@@ -141,6 +141,10 @@ TEST_F(Directed, RandomMinimizedTest2)
 {
     ASSERT_TRUE(run_isolated_test(1, 1, 8));
 }
+TEST_F(Directed, RandomMinimizedTest3)
+{
+    ASSERT_TRUE(run_isolated_test(1, 1, 9));
+}
 
 TEST_F(Directed, Add)
 {
