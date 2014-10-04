@@ -17,7 +17,7 @@ class Model : public ::testing::Test
     protected:
         virtual void SetUp()
         {
-            auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+            seed = std::chrono::system_clock::now().time_since_epoch().count();
             rng.seed(seed);
         }
 
@@ -26,9 +26,12 @@ class Model : public ::testing::Test
         }
 
         std::mt19937 rng;
+        size_t seed;
 };
 
-bool run_isolated_test(int ninserts, int npops, int nreinserts)
+
+template <typename RNG, typename D>
+bool run_isolated_test(int ninserts, int npops, int nreinserts, D dist, RNG entropy)
 {
     Q q;
     InitQ(&q);
@@ -37,8 +40,9 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts)
 
     for(auto n = 0; n < ninserts; ++n)
     {
-        model.push_back(n);
-        AddQ(&q, &n);
+        auto d = dist(entropy);
+        model.push_back(d);
+        AddQ(&q, &d);
     }
     for(auto n = 0; n < npops; ++n)
     {
@@ -47,8 +51,9 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts)
     }
     for(auto n = 0; n < nreinserts; ++n)
     {
-        model.push_back(n);
-        AddQ(&q, &n);
+        auto d = dist(entropy);
+        model.push_back(d);
+        AddQ(&q, &d);
     }
     
     for(auto r : model)
@@ -64,14 +69,20 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts)
     FreeQ(&q);
     return result;
 }
+bool run_isolated_test(int ninserts, int npops, int nreinserts)
+{
+    std::mt19937 rng(0);
+    std::uniform_int_distribution<int> input_data(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    return run_isolated_test(ninserts, npops, nreinserts, input_data, rng);
+}
 
 TEST_F(Model, TheIDontHaveAllFuckingDaySoMakeTheComputerDoMyHomeworkTest)
 {
     std::uniform_int_distribution<int> ntests(0, 1000);
+    std::uniform_int_distribution<int> input_data(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
     //Generate a random number of inserts
     auto ninserts = ntests(rng);
-
 
     //Generate a random number of reads/pops
     auto npops = ntests(rng);
@@ -82,24 +93,25 @@ TEST_F(Model, TheIDontHaveAllFuckingDaySoMakeTheComputerDoMyHomeworkTest)
     auto nreinserts = ntests(rng);
 
      std::cout << "Test:\n"
+    << "\tSeed: " << seed << '\n'
     << "\tInserts: " << ninserts << '\n'
     << "\tDeletes: " << npops << '\n'
     << "\tReinserts: " << nreinserts << '\n';
     //Verify from the model
-    if(!run_isolated_test(ninserts, npops, nreinserts))
+    if(!run_isolated_test(ninserts, npops, nreinserts, input_data, rng))
     {
         std::cout << "Test Failed, minimizing.\n";
-        while(ninserts > 0 && run_isolated_test(ninserts, npops, nreinserts) == false)
+        while(ninserts > 0 && run_isolated_test(ninserts, npops, nreinserts, input_data, rng) == false)
         {
             --ninserts;
         }
         ++ninserts; //Make it fail again.
-        while(npops > 0 && run_isolated_test(ninserts, npops, nreinserts) == false)
+        while(npops > 0 && run_isolated_test(ninserts, npops, nreinserts, input_data, rng) == false)
         {
             --npops;
         }
         ++npops; //Make it fail again.
-        while(nreinserts > 0 && run_isolated_test(ninserts, npops, nreinserts) == false)
+        while(nreinserts > 0 && run_isolated_test(ninserts, npops, nreinserts, input_data, rng) == false)
         {
             --nreinserts;
         }
