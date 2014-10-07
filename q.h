@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "TCB.h"
 
-
+// TODO: should the list_parameter_t be an unsigned int?
 typedef int list_parameter_t;
 // Head    read            write                 Tail
 // V       V -> reads ->   V  -> writes ->        V   
@@ -105,6 +105,7 @@ void AddQ(Q* q, list_parameter_t const * item)
     ++q->curr_write;
     ++q->size;
     print_state_(q, "Add");
+    // TODO: don't we need to change prev/next pointers somewhere in here?  
 }
 
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
@@ -139,7 +140,8 @@ void FreeQ(Q* q)
 }
 
 void RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
-{
+{// TODO: Wouldn't this be more efficient if we just moved the pointers 
+// rather than dequeuing an item and re-enqueueing it?
     if(q->size == 0)
         return;
     AddQ(q, DelQ(q));
