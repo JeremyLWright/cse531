@@ -1,6 +1,11 @@
 #pragma once
+#ifndef LIST_PARAM
+    typedef TCB_t list_parameter_t;
+    #define LIST_PARAM
+#endif
 #include "q.h"
-    
+
+Q RunQ; // TODO: need to malloc this q - main??
 
 void start_thread(void (*function)(void))
 { // begin pseudo code
@@ -18,7 +23,7 @@ void start_thread(void (*function)(void))
 
     //call addQ to add this TCB into the “RunQ” which is a global header pointer
     // TODO: where does the q come from?  is it assumed global in the main context?
-    AddQ(q, &newTCB);
+    AddQ(RunQ, &newTCB);
   //end pseudo code
 }
 
@@ -26,12 +31,13 @@ void run()
 {   // real code
     ucontext_t parent;     // get a place to store the main context, for faking
 
-    // TODO: where does the parentcontext get populated??  
-    // is this just a dummy context that never gets used??
+    // int getcontext(ucontext_t *ucp); 
+    // initializes the structure pointed at by ucp to the currently active context. 
     getcontext(&parent);   // magic sauce
 
     // TODO: Is this supposed to be RunQ->context or RunQ->next ??
-    swapcontext(&parent, &(RunQ->conext));  // start the first thread
+    swapcontext(&parent, &(RunQ->curr_write));  // start the first thread
+    // swapcontext will return (0) only when the current context is reactivated
 }
 
 void yield() // similar to run
@@ -39,6 +45,8 @@ void yield() // similar to run
     //rotate the run Q;
     RotateQ(q);
     //swap the context, from previous thread to the thread pointed to by runQ
-    // TODO: is this the correct order?
-    swapcontext($(RunQ->head), &(RunQ->head->prev));
+    // int swapcontext(ucontext_t *oucp, ucontext_t *ucp); saves the current context in
+    // the structure pointed to by oucp, and then activates the context pointed to by ucp.
+    swapcontext(&current, &(RunQ->curr_write));
+    // swapcontext will return 0 when the current (yielding) context is reactivated
 }

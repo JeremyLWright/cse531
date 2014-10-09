@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include "TCB.h"
 
-// TODO: should the list_parameter_t be an unsigned int?
-typedef int list_parameter_t;
+#ifndef LIST_PARAM
+    #define LIST_PARAM
+    typedef int list_parameter_t;
+#endif
 // Head    read            write                 Tail
 // V       V -> reads ->   V  -> writes ->        V   
 // [ -------------- ---------- --------- -------- ]
