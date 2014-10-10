@@ -36,14 +36,16 @@ int main(int argc, const char *argv[])
     InitQ(&RunQ);
     printf("Begin Main thread\n");
 
-    for(i = 0; i < 1000000; ++i)
+    // Let's see Linux Kernel try to manage 1M threads! :-P
+    // Yeah, 13,105,680 KB of memory
+    for(i = 0; i < 1000000; ++i) 
     {
         start_thread(function1);    
         start_thread(function2);
     }
-    run();
+    run(); //I'm pretty sure this never returns
 
-    while (1)
+    while (1) //I'm pretty sure this never runs
     {
         usleep(sleep_usec);
     }
