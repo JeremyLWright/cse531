@@ -1,4 +1,8 @@
 extern "C" {
+#ifndef LIST_PARAM
+    #define LIST_PARAM
+    typedef int list_parameter_t;
+#endif
 #include "q.h"
 }
 
