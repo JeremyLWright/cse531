@@ -141,11 +141,11 @@ void FreeQ(Q* q)
     q->curr_read = 0;
 }
 
-void RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
+list_paremeter_t* RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
 {// TODO: Wouldn't this be more efficient if we just moved the pointers 
 // rather than dequeuing an item and re-enqueueing it?
     if(q->size == 0)
         return;
     AddQ(q, DelQ(q));
+	return Peek(q);
 }
-

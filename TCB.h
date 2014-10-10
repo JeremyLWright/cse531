@@ -4,8 +4,6 @@
 #include <string.h>
 
 typedef struct _TCB_t {
-    void * next;
-    void * prev;
     ucontext_t context;
 } TCB_t;
 
