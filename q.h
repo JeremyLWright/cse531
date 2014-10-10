@@ -20,7 +20,7 @@ typedef struct _Q {
     size_t size;
 } Q;
 
-size_t const start_size = 8;
+size_t const start_size = 12;
 size_t const growth_factor = 2;
 size_t size_(Q const * q)
 {
@@ -108,7 +108,6 @@ void AddQ(Q* q, list_parameter_t const * item)
     ++q->curr_write;
     ++q->size;
     print_state_(q, "Add");
-    // TODO: don't we need to change prev/next pointers somewhere in here?  
 }
 
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
@@ -130,6 +129,10 @@ list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
 
 list_parameter_t* PeekQ(Q* q) // will return a pointer to the item deleted.
 {
+    if(q->curr_read == q->tail)
+    {
+        q->curr_read = q->head;
+    }
     return q->curr_read;
 }
 
@@ -146,7 +149,7 @@ list_parameter_t* RotateQ(Q* q) // deletes the head and adds it to the tail, by 
 {
     if(q->size == 0)
         return 0;
-    list_parameter_t* r = PeekQ(q);
     AddQ(q, DelQ(q));
+    list_parameter_t* r = PeekQ(q);
 	return r;
 }
