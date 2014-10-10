@@ -2,7 +2,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "TCB.h"
+#include <string.h>
+#include <strings.h>
 
 #ifndef LIST_PARAM
     #define LIST_PARAM
@@ -12,11 +13,11 @@
 // V       V -> reads ->   V  -> writes ->        V   
 // [ -------------- ---------- --------- -------- ]
 typedef struct _Q {
-    list_parameter_t* head = 0;
-    list_parameter_t* tail = 0;
-    list_parameter_t* curr_read = 0;
-    list_parameter_t* curr_write = 0;
-    size_t size = 0;
+    list_parameter_t* head;
+    list_parameter_t* tail;
+    list_parameter_t* curr_read;
+    list_parameter_t* curr_write;
+    size_t size;
 } Q;
 
 size_t const start_size = 8;
@@ -141,11 +142,11 @@ void FreeQ(Q* q)
     q->curr_read = 0;
 }
 
-list_paremeter_t* RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
-{// TODO: Wouldn't this be more efficient if we just moved the pointers 
-// rather than dequeuing an item and re-enqueueing it?
+list_parameter_t* RotateQ(Q* q) // deletes the head and adds it to the tail, by just moving the header pointer to the next item.
+{
     if(q->size == 0)
-        return;
+        return 0;
+    list_parameter_t* r = PeekQ(q);
     AddQ(q, DelQ(q));
-	return Peek(q);
+	return r;
 }
