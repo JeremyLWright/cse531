@@ -2,7 +2,12 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_CXX_FLAGS "-Wall -Werror -std=gnu++0x")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg -g3 -ggdb -fprofile-arcs -ftest-coverage")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS "-Wall -Werror")
+set(CMAKE_C_FLAGS_DEBUG "-pg -g3 -ggdb -fprofile-arcs -ftest-coverage")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 include_directories(.)
+
+add_executable(threads thread_test.c)
 
 include(ExternalProject)
 # Add gtest
