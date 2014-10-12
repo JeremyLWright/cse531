@@ -105,7 +105,7 @@ bool run_isolated_test(int ninserts, int npops, int nreinserts)
     return run_isolated_test(ninserts, npops, nreinserts, input_data, rng);
 }
 
-TEST_F(Model, TheIDontHaveAllFuckingDaySoMakeTheComputerDoMyHomeworkTest)
+TEST_F(Model, RandomizedModel)
 {
     std::uniform_int_distribution<int> ntests(0, 1000);
     std::uniform_int_distribution<int> input_data(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
@@ -242,6 +242,27 @@ TEST_F(Directed, Compact)
     ASSERT_EQ(1, *DelQ(&q));
     ASSERT_EQ(2, *DelQ(&q));
 
+}
+
+TEST_F(Directed, Rotate)
+{
+    for(int i = 0; i < 4; ++i)
+    {
+        AddQ(&q, &i);
+    }
+
+    for(int i = 0; i < 100; ++i)
+    {
+    ASSERT_EQ(0, *PeekQ(&q));
+    ASSERT_EQ(1, *RotateQ(&q));
+    ASSERT_EQ(1, *PeekQ(&q));
+    ASSERT_EQ(2, *RotateQ(&q));
+    ASSERT_EQ(2, *PeekQ(&q));
+    ASSERT_EQ(3, *RotateQ(&q));
+    ASSERT_EQ(3, *PeekQ(&q));
+    ASSERT_EQ(0, *RotateQ(&q));
+    ASSERT_EQ(0, *PeekQ(&q));
+    }
 }
 
 

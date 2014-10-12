@@ -8,6 +8,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 include_directories(.)
 
 add_executable(threads thread_test.c)
+add_executable(threads2 thread_test.cpp)
 
 include(ExternalProject)
 # Add gtest
