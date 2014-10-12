@@ -16,21 +16,14 @@ void run()
 {   // real code
     ucontext_t parent;     // get a place to store the main context, for faking
 
-    //// int getcontext(ucontext_t *ucp); 
-    //// initializes the structure pointed at by ucp to the currently active context. 
     getcontext(&parent);   // magic sauce
 
-    //swapcontext(&parent, RotateQ(&RunQ)->context);  // start the first thread
-    RotateQ(&RunQ); //TODO, try commenting and removing this one. It changes the behavior weirdly
-    // swapcontext will return (0) only when the current context is reactivated
-setcontext(&RunQ.curr->ctx);
-//   swapcontext(&parent, &RunQ.curr->ctx);
+    swapcontext(&parent, &RunQ.head->ctx);
 }
 
 void yield()
 {
-    RotateQ(&RunQ);
+    RotateQ(&RunQ); //TODO: Not rotating here causes the same behavior as the previous queue. The previous queue probably wasn't managing the stacks properly.
     swapcontext(&RunQ.curr->ctx, &RunQ.curr->next->ctx);
-    printf("\tHello from yield.\n");
 }
 

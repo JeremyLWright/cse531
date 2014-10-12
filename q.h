@@ -38,9 +38,11 @@ void AddQ(Q* q, list_parameter_t * item)
     }
     else
     {
+        q->head->prev = item;
+        q->tail->next = item;
         item->prev = q->tail;
         item->next = q->head;
-        q->tail->next = item;
+
     }
     q->tail = item;
     q->curr = item;

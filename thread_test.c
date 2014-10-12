@@ -1,4 +1,5 @@
 #include "threads.h"
+#include <unistd.h>
 
 size_t alive = 0;
 
@@ -10,9 +11,10 @@ void func1(void)
     while(1)
     {
         printf("[%d] ", ++i);
-        printf("func%lu: swapcontext(&uctx_func1, &uctx_func2)\n", my_id);
+        printf("func%lu: swapcontext\n", my_id);
         yield();
-        printf("func%lu: returning\n", my_id);
+        printf("func%lu: returning\n\n", my_id);
+        usleep(500000);
     }
 }
     
@@ -23,9 +25,10 @@ void func2(void)
     while(1)
     {
         printf("[%d] ", ++j);
-    printf("func2: swapcontext(&uctx_func2, &uctx_func1)\n");
+    printf("func2: swapcontext\n");
     yield();
     printf("func2: returning\n");
+        usleep(500000);
     }
 }
 
@@ -36,9 +39,10 @@ void func3(void)
     while(1)
     {
         printf("[%d] ", ++j);
-    printf("func3: swapcontext(&uctx_func3, &uctx_func1)\n");
+    printf("func3: swapcontext\n");
     yield();
-    printf("func3: returning\n");
+    printf("func3: returning\n\n");
+        usleep(500000);
     }
 }
 
@@ -49,9 +53,10 @@ void func4(void)
     while(1)
     {
         printf("[%d] ", ++j);
-    printf("func4: swapcontext(&uctx_func3, &uctx_func1)\n");
+    printf("func4: swapcontext\n");
     yield();
     printf("func4: returning\n");
+        usleep(500000);
     }
 }
 
