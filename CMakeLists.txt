@@ -8,7 +8,7 @@ set(CMAKE_C_FLAGS_RELEASE "-O3")
 include_directories(.)
 
 add_executable(threads thread_test.c)
-add_executable(threads2 thread_test.cpp)
+add_executable(example example.c)
 
 include(ExternalProject)
 # Add gtest
@@ -25,15 +25,15 @@ ExternalProject_Get_Property(googletest source_dir)
 include_directories(${source_dir}/include)
 ExternalProject_Get_Property(googletest binary_dir)
 link_directories(${binary_dir})
-file(GLOB test_srcs "*.test.cpp")
-add_executable(tests ${test_srcs})
-add_dependencies(tests googletest)
-target_link_libraries(tests
-gtest_main
-gtest
-pthread)
-enable_testing()
-add_test(cse531_tests tests)
+#file(GLOB test_srcs "*.test.cpp")
+#add_executable(tests ${test_srcs})
+#add_dependencies(tests googletest)
+#target_link_libraries(tests
+#gtest_main
+#gtest
+#pthread)
+#enable_testing()
+#add_test(cse531_tests tests)
 
 SET(CPACK_GENERATOR "ZIP")
 SET(CPACK_PACKAGE_NAME "wrightj_welchm.zip")

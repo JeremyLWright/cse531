@@ -1,26 +1,27 @@
 #pragma once
-
 #include <ucontext.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct _TCB_t {
-    ucontext_t context;
+    ucontext_t ctx;
+    struct _TCB_t* next;
+    struct _TCB_t* prev;
 } TCB_t;
+#ifndef LIST_PARAM
+    #define LIST_PARAM
+    typedef TCB_t list_parameter_t;
+#endif
 
-//The queue items used for handling the threads is the TCB_t. A TCB_t is a structure that contains a next pointer, a previous pointer and a data item of the type "ucontext_t".
-//
-//Initializing a TCB can be done as follows (real code):
+#include "q.h"
 
 void init_TCB (TCB_t *tcb, void *function, void *stackP, int stack_size)
-// arguments to init_TCB are
-//   1. pointer to the function, to be executed
-//   2. pointer to the thread stack
-//   3. size of the stack
 {
-
-    memset(tcb, '\0', sizeof(TCB_t));       // wash, rinse
-    getcontext(&tcb->context);              // have to get parent context, else snow forms on hell
-    tcb->context.uc_stack.ss_sp = stackP;
-    tcb->context.uc_stack.ss_size = (size_t) stack_size;
-    makecontext(&tcb->context, (void(*)())function, 0);// context is now cooked
+    getcontext(&tcb->ctx);
+    tcb->ctx.uc_stack.ss_sp = stackP;
+    tcb->ctx.uc_stack.ss_size = stack_size;
+    makecontext(&tcb->ctx, function, 0);
 }

@@ -1,92 +1,79 @@
 #include "threads.h"
-#include "unistd.h" // usleep()
-#include <stdio.h>
 
-static int globalInt1 = 42;
-static int globalInt2 = 1024;
-static const int sleep_usec = 250;
+size_t alive = 0;
 
-// TODO: define more interesting functions that may be passed to start_thread()
-void function1(){
-    int i = 10;
-    static int numCalls = 0;
-    ++numCalls;
-    while(1) {
-        i++;
-        usleep(sleep_usec);
-        if (numCalls%100 == 0) {
-        printf("Function1 (instance %d) waking up for the %dth time - Global %d...\n", 
-            numCalls, i, globalInt1);
-        }
+void func1(void)
+{
+    int i =0;
+    size_t my_id = alive++;
+    printf("func%lu: started\n", my_id);
+    while(1)
+    {
+        printf("[%d] ", ++i);
+        printf("func%lu: swapcontext(&uctx_func1, &uctx_func2)\n", my_id);
         yield();
+        printf("func%lu: returning\n", my_id);
     }
 }
-
-void f3()
+    
+void func2(void)
 {
-    printf("3 Hello.\n");
+    int j = 10;
+    printf("func2: started\n");
+    while(1)
+    {
+        printf("[%d] ", ++j);
+    printf("func2: swapcontext(&uctx_func2, &uctx_func1)\n");
     yield();
-    printf("3 Bye.");
+    printf("func2: returning\n");
+    }
 }
-void f4()
+
+void func3(void)
 {
-    printf("4 Hello.\n");
+    int j = 10;
+    printf("func3: started\n");
+    while(1)
+    {
+        printf("[%d] ", ++j);
+    printf("func3: swapcontext(&uctx_func3, &uctx_func1)\n");
     yield();
-    printf("4 Bye.");
-}
-
-void function2(){
-    int i = 0;
-    int numCalls = 0;
-    ++numCalls;
-    while(1) {
-        i++;
-        usleep(sleep_usec);
-        if (numCalls%100 == 0) {
-            printf("Function2 (instance %d) is awake and computing (%d times) - Global %d...\n", 
-                    numCalls, i, globalInt2);
-        }
-        yield();
-        // it seems that we're never returning from the yield and spawning new threads instead
-        globalInt2++;
-        printf("Function2 (instance %d) is back in context (%d times) - Global %d...\n", 
-            numCalls, i, globalInt2);
+    printf("func3: returning\n");
     }
 }
 
-
-int main(int argc, const char *argv[])
+void func4(void)
 {
-
-    int i = 0;
-    int totalThreads = 250000;
-    if (argc > 1){
-        totalThreads = atoi(argv[1]);
+    int j = 10;
+    printf("func4: started\n");
+    while(1)
+    {
+        printf("[%d] ", ++j);
+    printf("func4: swapcontext(&uctx_func3, &uctx_func1)\n");
+    yield();
+    printf("func4: returning\n");
     }
-    printf("Begin Main function\n");
-    printf("Main function: spawning %d child threads...\n", totalThreads);
-    // allocate a RunQ
+}
+
+
+int main(int argc, char *argv[])
+{
     InitQ(&RunQ);
+    start_thread(func1);
+    start_thread(func1);
+    start_thread(func1);
+    start_thread(func1);
+    start_thread(func1);
+#if 0
+    start_thread(func2);
+    start_thread(func3);
+    start_thread(func4);
+#endif
 
-    // Let's see Linux Kernel try to manage 1M threads! :-P
-    // Yeah, 13,105,680 KB of memory
-    for(i = 0; i < totalThreads; ++i) 
-    {
-        //start_thread(function1);
-        start_thread(f3);
-        start_thread(f4);
-    //    start_thread(function2);
-    }
-    printf("Main function: %d threads queued, ready to run:\n", i);
-    run(); //I'm pretty sure this never returns
 
-    printf("Main function entering wait loop\n");
-    while (1) //I'm pretty sure this never runs
-    {
-        usleep(sleep_usec);
-    }
-    return 0;
-
+    printf("main: swapcontext(&uctx_main, &uctx_func2)\n");
+    run();
+    
+    printf("main: exiting\n");
+    exit(EXIT_SUCCESS);
 }
-
-
