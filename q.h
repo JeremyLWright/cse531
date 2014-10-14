@@ -1,5 +1,5 @@
 #pragma once
-#include <strings.h>
+#include <string.h>
 /*----------------------- q.h --------------------------------------------*/
 #ifndef LIST_PARAM
 typedef struct _test_item_t {
@@ -22,7 +22,7 @@ typedef struct _Q {
 
 void InitQ(Q* q)
 {
-    bzero(q, sizeof(Q));
+    memset(q, 0, sizeof(Q));
 }
 size_t size_(Q* q)
 {
@@ -64,6 +64,13 @@ list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
 }
 list_parameter_t* RotateQ(Q* q)
 {
+    if(q->head == 0 || q->curr == 0)
+        return 0;
     q->curr = q->curr->next;
     return q->curr;
+}
+
+list_parameter_t* PeekQ(Q* q)
+{
+	return q->curr;
 }
