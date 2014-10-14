@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * FILENAME:    q.test.cpp
+ * DESCRIPTION: unit tests for user-space threads and queue
+ * AUTHOR:      Jeremy Wright, Matt Welch
+ * SCHOOL:      Arizona State University
+ * CLASS:       CSE531: Dstributed and Multiprocessor Operating Systems
+ * INSTRUCTOR:  Dr. Partha Dasgupta
+ * TERM:        Fall 2014
+ *******************************************************************************/
 extern "C" {
 #include "q.h"
 }
@@ -278,7 +287,7 @@ TEST_F(Directed, Rotate)
     size_t const test_size = 4;
     test_item_t data[test_size];
 
-    for(int i = 0; i < test_size; ++i)
+    for(int i = 0; i < (int)test_size; ++i)
     {
         data[i].data = i;
         AddQ(&q, &data[i]);
@@ -302,7 +311,7 @@ TEST_F(Directed, AddDel)
     size_t const test_size = 4;
     test_item_t data[test_size];
 
-    for(int i = 0; i < test_size; ++i)
+    for(int i = 0; i < (int)test_size; ++i)
     {
         data[i].data = i;
         AddQ(&q, &data[i]);

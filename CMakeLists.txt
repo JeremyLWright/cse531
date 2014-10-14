@@ -16,7 +16,7 @@ set(CMAKE_C_FLAGS_RELEASE "/Ox")
 endif(UNIX)
 include_directories(.)
 
-#add_executable(threads thread_test.c)
+add_executable(threads thread_test.c)
 #add_executable(example example.c)
 
 include(ExternalProject)

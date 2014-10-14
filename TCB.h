@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * FILENAME:    TCB.h
+ * DESCRIPTION: Thread Control Block implementation for user-space threads
+ * AUTHOR:      Jeremy Wright, Matt Welch
+ * SCHOOL:      Arizona State University
+ * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
+ * INSTRUCTOR:  Dr. Partha Dasgupta
+ * TERM:        Fall 2014
+ *******************************************************************************/
 #pragma once
 #include <ucontext.h>
 #include <stdio.h>
