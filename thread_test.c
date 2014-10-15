@@ -13,7 +13,7 @@
 #include <time.h> // time()
 
 size_t alive = 0;
-int globalInt = 250;
+int globalInt = 42;
 
 int randint(int max) { return (int)rand()/(RAND_MAX*1.0)*max; } 
 
@@ -39,8 +39,9 @@ void func1(void)
         printf("func%lu: swapcontext, myValue=%d, globalInt=%d\n", my_id, myValue, globalInt);
         yield();
         printf("func%lu: returning. myValue=%d\n\n", my_id, myValue);
-        usleep(100000);
+        usleep(500000);
     }
+    // this should never be reached - code is here for future compatibility
     printf("func%lu: terminating -  myValue=%d, globalInt=%d\n", my_id, myValue, globalInt);
     yield();
 }
@@ -49,22 +50,23 @@ void func2(void)
 {
     static int myChar = 0;
     myChar = randint(127);
-    int j = 10;
+    int j = 0;
     printf("func2B: started\n");
     while(1)
     {   
         myChar = getNextChar(myChar);
         printf("[%d] ", ++j);
-        printf("func2B: swapcontext, myChar = %c\n", myChar);
+        printf("func2B: swapcontext, myChar = '%c', globalInt = %d\n", myChar, globalInt);
         yield();
         printf("func2B: returning\n");
         usleep(500000);
     }
+    // this should never be reached
 }
 
 void func3(void)
 {
-    int j = 10;
+    int j = 0;
     printf("func3B: started\n");
     while(1)
     {
@@ -74,11 +76,12 @@ void func3(void)
         printf("func3B: returning\n\n");
         usleep(500000);
     }
+    // this should never be reached
 }
 
 void func4(void)
 {
-    int j = 10;
+    int j = 0;
     printf("func4B: started\n");
     while(1)
     {
@@ -88,13 +91,14 @@ void func4(void)
         printf("func4B: returning\n");
         usleep(500000);
     }
+    // this should never be reached
 }
 
 
 int main(int argc, char *argv[])
 {
     int i = 0;
-    int totalThreads = 100;
+    int totalThreads = 10;
     if (argc > 1){
         totalThreads = atoi(argv[1]);
     }
@@ -105,7 +109,6 @@ int main(int argc, char *argv[])
     start_thread(func2);
     start_thread(func3);
     start_thread(func4);
-    start_thread(func2);
     for (i = 0; i < totalThreads; i++) {
         start_thread(func1);
     }
@@ -120,7 +123,7 @@ int main(int argc, char *argv[])
     start_thread(func4);
 #endif
 
-
+    // this should never be reached
     printf("main: swapcontext(&uctx_main, &uctx_func2)\n");
     run();
     
