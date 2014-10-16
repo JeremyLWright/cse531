@@ -10,8 +10,8 @@ env:
 addons:
   coverity_scan:
     project:
-      name: "jwright85/cse531"
-      description: "Build submitted via Travis CI"
+        name: "jwright85/cse531"
+        description: "CSE531 User Threads"
     notification_email: jeremy@quiescent.us
     build_command_prepend: cmake ..
     build_command:   cmake --build .
@@ -37,6 +37,7 @@ script:
             cmake .. -DCMAKE_INSTALL_PREFIX=`pwd`/_install &&
             cmake --build .
             ;;
-    fi
+        fi
+
 after_script:
     - ctest -V .
