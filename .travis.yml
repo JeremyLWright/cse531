@@ -24,6 +24,7 @@ compiler:
 before_install:
  # g++4.8.1
  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+ - sudo apt-get update -qq
 
 install:
  # g++4.8.1
