@@ -13,8 +13,8 @@ addons:
         name: "jwright85/cse531"
         description: "CSE531 User Threads"
     notification_email: jeremy@quiescent.us
-    build_command_prepend: cmake ..
-    build_command:   cmake --build .
+    build_command_prepend: "mkdir -p build && cd build && cmake .."
+    build_command:  "cmake --build ."
     branch_pattern: master
 
 
