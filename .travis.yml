@@ -15,7 +15,7 @@ addons:
     notification_email: jeremy@quiescent.us
     build_command_prepend: cmake ..
     build_command:   cmake --build .
-    branch_pattern: coverity_scan
+    branch_pattern: master
 
 
 language: cpp
