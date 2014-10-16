@@ -29,7 +29,7 @@ CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_CXX_COMPILER=${CMAKE_C
 # Disable install step
 INSTALL_COMMAND ""
 )
-# Specify include dir
+
 ExternalProject_Get_Property(googletest source_dir)
 include_directories(${source_dir}/include)
 ExternalProject_Get_Property(googletest binary_dir)
