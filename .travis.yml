@@ -31,14 +31,11 @@ install:
  - sudo apt-get install -qq g++-4.8
  - export CXX="g++-4.8"
 
+before_script:
+    - mkdir build
+
 script: 
-    - if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then
-        case $BUILD_SYSTEM in
-            cmake)
-            cmake .. -DCMAKE_INSTALL_PREFIX=`pwd`/_install &&
-            cmake --build .
-            ;;
-        fi
+    - cd build && cmake .. && cmake --build .
 
 after_script:
     - ctest -V .
