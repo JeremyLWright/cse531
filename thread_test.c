@@ -7,7 +7,7 @@
  * INSTRUCTOR:  Dr. Partha Dasgupta
  * TERM:        Fall 2014
  *******************************************************************************/
-#include "threads.h"
+#include "threads/threads.h"
 #include <unistd.h> // sleep()
 #include <stdlib.h> // rand(), srand()
 #include <time.h> // time()

@@ -16,8 +16,8 @@ set(CMAKE_C_FLAGS_RELEASE "/Ox")
 endif(UNIX)
 include_directories(.)
 
-#add_executable(threads thread_test.c)
-#add_executable(example example.c)
+add_executable(threads examples/thread_test.cpp)
+add_executable(example examples/example.c)
 
 include(ExternalProject)
 # Add gtest
@@ -34,7 +34,7 @@ ExternalProject_Get_Property(googletest source_dir)
 include_directories(${source_dir}/include)
 ExternalProject_Get_Property(googletest binary_dir)
 link_directories(${binary_dir})
-file(GLOB test_srcs "*.test.cpp")
+file(GLOB test_srcs "tests/*.test.cpp")
 add_executable(tests ${test_srcs})
 add_dependencies(tests googletest)
 if(UNIX)
@@ -48,7 +48,7 @@ gtest_main
 gtest)
 endif()
 enable_testing()
-add_test(cse531_tests tests)
+add_test(googletest tests)
 
 SET(CPACK_GENERATOR "ZIP")
 SET(CPACK_PACKAGE_NAME "wrightj_welchm.zip")
