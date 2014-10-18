@@ -47,18 +47,16 @@ void AddQ(Q* q, list_parameter_t * item)
         item->prev = item;
         item->next = item;
         q->head = item;
+        q->curr = item;
     }
     else
     {
-        
         q->head->prev = item;
         q->tail->next = item;
         item->prev = q->tail;
         item->next = q->head;
-
     }
     q->tail = item;
-    q->curr = item;
     ++q->size;
 }
 
