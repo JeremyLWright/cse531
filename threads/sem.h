@@ -5,12 +5,15 @@ typedef struct _semaphore_t
 {
     int count;
     Q WaitQ;
+    size_t id;
 } semaphore_t;
 
-
+static size_t gid = 0;
 void init_sem(semaphore_t* s, int val)
 {
     InitQ(&s->WaitQ);
+    s->count = val;
+    s->id = ++gid;
 }
 
 void sem_yield(semaphore_t* sem)
