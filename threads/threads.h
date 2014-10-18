@@ -22,17 +22,15 @@ void start_thread(void (*function)(void))
 }
 
 void run()
-{   // real code
-    ucontext_t parent;     // get a place to store the main context, for faking
-
-    getcontext(&parent);   // magic sauce
-
+{   
+    ucontext_t parent;   // get a place to store the main context
+    getcontext(&parent);
     swapcontext(&parent, &RunQ.head->ctx);
 }
 
 void yield()
 {
-    RotateQ(&RunQ); //TODO: Not rotating here causes the same behavior as the previous queue. The previous queue probably wasn't managing the stacks properly.
-    swapcontext(&RunQ.curr->ctx, &RunQ.curr->next->ctx);
+    RotateQ(&RunQ); 
+    swapcontext(&RunQ.curr->prev->ctx, &RunQ.curr->ctx);
 }
 

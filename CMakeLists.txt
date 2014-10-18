@@ -17,7 +17,7 @@ endif(UNIX)
 include_directories(.)
 include_directories(threads)
 
-add_executable(threads examples/thread_test.cpp)
+add_executable(thread_test thread_test.c)
 add_executable(example examples/example.c)
 add_executable(read_write_s examples/read_write_s.c)
 

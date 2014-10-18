@@ -16,7 +16,7 @@ void init_sem(semaphore_t* s, int val)
 void sem_yield(semaphore_t* sem)
 {
     AddQ(&sem->WaitQ, DelQ(&RunQ));
-    swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->next->ctx);
+    swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->ctx);
 }
 
 void P(semaphore_t* sem)
