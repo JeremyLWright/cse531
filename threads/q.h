@@ -39,6 +39,9 @@ size_t size_(Q* q)
 }
 void AddQ(Q* q, list_parameter_t * item)
 {
+    if(item == 0 || q == 0)
+        return;
+
     if(q->head == 0)
     {
         item->prev = item;
@@ -47,6 +50,7 @@ void AddQ(Q* q, list_parameter_t * item)
     }
     else
     {
+        
         q->head->prev = item;
         q->tail->next = item;
         item->prev = q->tail;
@@ -61,13 +65,16 @@ void AddQ(Q* q, list_parameter_t * item)
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
 {
     //Are we empty?
-    if(q->head == 0)
+    if(q->head == 0 || q->curr == 0 || q->tail == 0)
     {   
         return 0;
     }
-    list_parameter_t* r = q->tail;
-    q->curr = q->tail;
-    q->tail = q->tail->prev;
+    list_parameter_t* r = q->curr;
+    list_parameter_t* prev = q->curr->prev;
+    list_parameter_t* next = q->curr->next;
+    prev->next = next;
+    next->prev = prev;
+    q->curr = next;
     --q->size;
     return r;
 }

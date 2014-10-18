@@ -202,9 +202,9 @@ TEST_F(Directed, Add)
 {
     for(int i = 1; i < 100; ++i)
     {
-        test_item_t t;
-        t.data = i;
-        AddQ(&q, &t);
+        test_item_t* t = new test_item_t;
+        t->data = i;
+        AddQ(&q, t);
         ASSERT_EQ(i, size_(&q));
     }
     ASSERT_EQ(99, size_(&q));

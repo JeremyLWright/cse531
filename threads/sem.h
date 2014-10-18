@@ -1,41 +1,39 @@
 #pragma once
 #include "threads.h"
 
-typedef struct _Semaphore_t
+typedef struct _semaphore_t
 {
-    int value;
+    int count;
     Q WaitQ;
-} Semaphore_t;
+} semaphore_t;
 
 
-Semaphore_t CreateSem(int val)
+void init_sem(semaphore_t* s, int val)
 {
-    Semaphore_t s;
-    initQ(&s.WaitQ);
-    return s;
+    InitQ(&s->WaitQ);
 }
 
-void sem_yield(Semaphore_t* sem)
+void sem_yield(semaphore_t* sem)
 {
-    AddQ(sem->WaitQ, DelQ(RunQ));
+    AddQ(&sem->WaitQ, DelQ(&RunQ));
     swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->next->ctx);
 }
 
-void P(Semaphore_t* sem)
+void P(semaphore_t* sem)
 {
-    --sem->value;
-    if(sem->value < 0)
+    --sem->count;
+    if(sem->count < 0)
     {
         sem_yield(sem);
     }
 }
 
-void V(Semaphore_t* sem)
+void V(semaphore_t* sem)
 {
     ++sem->count;
     if(sem->count <= 0)
-    {
-        AddQ(RunQ, DelQ(sem->WaitQ));
+    {   
+        AddQ(&RunQ, DelQ(&sem->WaitQ));
     }
     yield();
 }

@@ -15,9 +15,11 @@ set(CMAKE_C_FLAGS_DEBUG "/Od /D_ITERATOR_DEBUG_LEVEL=1")
 set(CMAKE_C_FLAGS_RELEASE "/Ox")
 endif(UNIX)
 include_directories(.)
+include_directories(threads)
 
 add_executable(threads examples/thread_test.cpp)
 add_executable(example examples/example.c)
+add_executable(read_write_s examples/read_write_s.c)
 
 include(ExternalProject)
 # Add gtest
