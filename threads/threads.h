@@ -25,7 +25,7 @@ void run()
 {   
     ucontext_t parent;   // get a place to store the main context
     getcontext(&parent);
-    swapcontext(&parent, &RunQ.head->ctx);
+    swapcontext(&parent, &RunQ.curr->ctx);
 }
 
 void yield()
