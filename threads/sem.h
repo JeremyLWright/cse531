@@ -35,10 +35,10 @@ void init_sem(semaphore_t* s, int val)
 void sem_yield(semaphore_t* sem)
 {
     T_TRACE();
+    RotateQ(&sem->WaitQ); 
     AddQ(&sem->WaitQ, DelQ(&RunQ));
     S_TRACE();
     swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->ctx);
-    RotateQ(&sem->WaitQ);
 }
 
 void P(semaphore_t* sem)
