@@ -1,0 +1,2 @@
+/home/jwright/art/cse531/build/googletest-prefix/src/googletest-build/CMakeFiles/gtest.dir
+/home/jwright/art/cse531/build/googletest-prefix/src/googletest-build/CMakeFiles/gtest_main.dir

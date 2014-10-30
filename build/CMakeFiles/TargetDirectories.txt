@@ -1,0 +1,5 @@
+/home/jwright/art/cse531/build/CMakeFiles/example.dir
+/home/jwright/art/cse531/build/CMakeFiles/googletest.dir
+/home/jwright/art/cse531/build/CMakeFiles/read_write_s.dir
+/home/jwright/art/cse531/build/CMakeFiles/tests.dir
+/home/jwright/art/cse531/build/CMakeFiles/thread_test.dir

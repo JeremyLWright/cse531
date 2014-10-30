@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jwright/art/cse531/thread_test.c
+threads/threads.h
+/home/jwright/art/cse531/threads/threads.h
+unistd.h
+-
+stdlib.h
+-
+time.h
+-
+
+/home/jwright/art/cse531/threads/TCB.h
+ucontext.h
+-
+stdio.h
+-
+stdlib.h
+-
+strings.h
+-
+stdlib.h
+-
+string.h
+-
+q.h
+/home/jwright/art/cse531/threads/q.h
+
+/home/jwright/art/cse531/threads/q.h
+string.h
+-
+
+/home/jwright/art/cse531/threads/threads.h
+TCB.h
+/home/jwright/art/cse531/threads/TCB.h
+

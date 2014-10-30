@@ -1,0 +1,1 @@
+/usr/bin/c++   -Wall -Werror -std=gnu++0x -pg -g3 -ggdb -fprofile-arcs -ftest-coverage    CMakeFiles/tests.dir/tests/q.test.cpp.o  -o tests  -L/home/jwright/art/cse531/build/googletest-prefix/src/googletest-build -rdynamic -lgtest_main -lgtest -lpthread -Wl,-rpath,/home/jwright/art/cse531/build/googletest-prefix/src/googletest-build 
