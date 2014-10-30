@@ -25,8 +25,11 @@ void sem_yield(semaphore_t* sem)
 
 void P(semaphore_t* sem)
 {
-    --sem->count;
-    if(sem->count < 0)
+    if(sem->count > 0)
+    {
+        --sem->count;
+    }
+    else
     {
         sem_yield(sem);
     }

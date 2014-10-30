@@ -21,6 +21,8 @@ add_executable(thread_test thread_test.c)
 add_executable(example examples/example.c)
 add_executable(read_write_s examples/read_write_s.c)
 
+add_subdirectory(p-threads)
+
 include(ExternalProject)
 # Add gtest
 ExternalProject_Add(

@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include "sem.h"
 
 semaphore_t r_sem, w_sem, mutex;
@@ -47,7 +46,7 @@ void writer_entry(int ID)
 	printf("\t\t\t\t[writer: #%d]\ttrying to write\n", ID);
 	P(&mutex);
 	if (rc > 0 || wc > 0) {
-	    printf("\t\t\t\t[writer: #%d] blocking for others\n", ID);
+	    printf("\t\t\t\t[writer: #%d] blocking for others\n");
 	    wwc++;		// increment waiting writers
 	    V(&mutex);		// let go of the mutex, since i'll be
 	    // blocked
@@ -110,14 +109,12 @@ int main()
     init_sem(&mutex, 1);
     init_sem(&r_sem, 0);
     init_sem(&w_sem, 0);
-    start_thread(reader);
-    start_thread(reader);
-    start_thread(reader);
-    start_thread(reader);
-    start_thread(writer);
-    start_thread(writer);
-    start_thread(writer);
-    run();
+    start_thread(reader, NULL);
+    start_thread(reader, NULL);
+    start_thread(reader, NULL);
+    start_thread(reader, NULL);
+    start_thread(writer, NULL);
+    start_thread(writer, NULL);
     while (1) sleep(1);
 }   
 

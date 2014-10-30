@@ -1,0 +1,24 @@
+
+Files in this directory
+
+*.h files----------
+  threads.h -- used by all programs that use pthreads
+  sem.h -- semaphores using pthreads
+  monitor.h -- monitors using pthreads
+
+*.c Files---------
+  thread_test.c  -- testing thread creation
+  lock_test.c  -- testing locking and unlocking
+  sem_test.c  -- testing semaphores
+  prod_cons_s.c  -- producer/consumer using semaphores
+  read_write_s.c  -- readers and writeres using semaphores
+  prod_cons_m.c  -- producer/consumer using monitors
+  read_write_m.c -- readers and writeres using monitors
+
+other files-------
+           
+  race-c.c -- a race condition using Linux "clone"
+  race-p.c -- a race condition using pthreads
+
+
+

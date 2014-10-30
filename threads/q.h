@@ -61,7 +61,7 @@ void AddQ(Q* q, list_parameter_t * item)
 list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
 {
     //Are we empty?
-    if(q->head == 0 || q->curr == 0 || q->tail == 0)
+    if(q->head == 0 || q->curr == 0 || q->tail == 0 || q->size == 0)
     {   
         return 0;
     }
@@ -72,6 +72,12 @@ list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
     next->prev = prev;
     q->curr = next;
     --q->size;
+    //if(q->size == 0)
+    //{
+    //    q->head = 0;
+    //    q->tail = 0;
+    //}
+
     return r;
 }
 list_parameter_t* RotateQ(Q* q)
