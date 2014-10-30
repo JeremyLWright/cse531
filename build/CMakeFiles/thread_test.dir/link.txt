@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -Werror -pg -g3 -ggdb -fprofile-arcs -ftest-coverage    CMakeFiles/thread_test.dir/thread_test.c.o  -o thread_test -rdynamic 

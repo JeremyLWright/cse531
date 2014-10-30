@@ -19,9 +19,7 @@ typedef struct _test_item_t {
 typedef test_item_t list_parameter_t;
     #define LIST_PARAM
 #endif
-// Head    read            write                 Tail
-// V       V -> reads ->   V  -> writes ->        V   
-// [ -------------- ---------- --------- -------- ]
+
 typedef struct _Q {
     list_parameter_t* head;
     list_parameter_t* tail;

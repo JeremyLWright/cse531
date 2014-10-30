@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -Werror -pg -g3 -ggdb -fprofile-arcs -ftest-coverage    CMakeFiles/example.dir/examples/example.c.o  -o example -rdynamic 

@@ -1,1 +1,0 @@
-cmd='/usr/bin/cmake;-DCMAKE_BUILD_TYPE=Debug;-DCMAKE_CXX_COMPILER=/usr/bin/c++;-GUnix Makefiles;/home/jwright/art/cse531/build/googletest-prefix/src/googletest'

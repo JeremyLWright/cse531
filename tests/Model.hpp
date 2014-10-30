@@ -30,7 +30,7 @@ class Model : public ::testing::Test
             InitQ(&q);
         }
 
-        virtual void TearDown()
+        ~Model()
         {
         }
 

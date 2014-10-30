@@ -12,7 +12,7 @@
 #include <stdlib.h> // rand(), srand()
 #include <time.h> // time()
 
-size_t alive = 0;
+size_t alive;
 int globalInt = 42;
 
 int randint(int max) { return (int)rand()/(RAND_MAX*1.0)*max; } 
@@ -97,11 +97,12 @@ void func4(void)
 
 int main(int argc, char *argv[])
 {
-    int i = 0;
+    int i ;
     int totalThreads = 10;
     if (argc > 1){
         totalThreads = atoi(argv[1]);
     }
+    
     printf("Begin Main function\n");
     printf("Main function: spawning %d child threads...\n", totalThreads);
     InitQ(&RunQ);
@@ -109,7 +110,7 @@ int main(int argc, char *argv[])
     start_thread(func2);
     start_thread(func3);
     start_thread(func4);
-    for (i = 0; i < totalThreads; i++) {
+    for (; i < totalThreads; i++) {
         start_thread(func1);
     }
  

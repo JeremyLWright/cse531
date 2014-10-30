@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -Werror -pg -g3 -ggdb -fprofile-arcs -ftest-coverage    CMakeFiles/read_write_s.dir/examples/read_write_s.c.o  -o read_write_s -rdynamic 

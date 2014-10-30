@@ -8,9 +8,10 @@ typedef struct _semaphore_t
     size_t id;
 } semaphore_t;
 
-static size_t gid = 0;
 void init_sem(semaphore_t* s, int val)
 {
+    static size_t gid = 0;
+
     InitQ(&s->WaitQ);
     s->count = val;
     s->id = ++gid;
