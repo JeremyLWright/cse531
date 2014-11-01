@@ -25,15 +25,27 @@ void run()
 {   
     ucontext_t parent;   // get a place to store the main context
     getcontext(&parent);
-    swapcontext(&parent, &RunQ.curr->ctx);
+    swapcontext(&parent, &CurrQ(&RunQ)->ctx);
 }
 
 void yield()
 {
+    assert(size_(&RunQ) > 0);
     RotateQ(&RunQ); 
 #ifdef DEBUG
-    printf(ANSI_COLOR_MAGENTA "%s:%d From T%lu to T%lu Size: %lu\n" ANSI_COLOR_RESET,  __func__, __LINE__, RunQ.curr->prev->tid, RunQ.curr->tid, size_(&RunQ));
+    {
+        char* c = (char*)malloc(4096);
+        Print(c, &RunQ);
+        printf(ANSI_COLOR_CYAN "%s" ANSI_COLOR_RESET, c);
+        free(c);
+    }
+    printf(ANSI_COLOR_MAGENTA "%s:%d From T%lu to T%lu Size: %lu\n" ANSI_COLOR_RESET,  
+            __func__, 
+            __LINE__, 
+            tid(PrevQ(&RunQ)), 
+            tid(NextQ(&RunQ)), 
+            size_(&RunQ));
 #endif
-    swapcontext(&RunQ.curr->prev->ctx, &RunQ.curr->ctx);
+    swapcontext(&PrevQ(&RunQ)->ctx, &CurrQ(&RunQ)->ctx);
 }
 

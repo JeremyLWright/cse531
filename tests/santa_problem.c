@@ -106,6 +106,7 @@ void init_seq_02(void)
 
 int main(int argc, const char *argv[])
 {
+    InitQ(&RunQ);
     init_sem(&santaSem, 0);
     init_sem(&reindeerSem, 0);
     init_sem(&mutex, 1);

@@ -19,7 +19,7 @@ typedef struct _TCB_t {
     ucontext_t ctx;
     struct _TCB_t* next;
     struct _TCB_t* prev;
-    size_t tid;
+    int data; //the tid
 } TCB_t;
 
 #define LIST_PARAM
@@ -27,11 +27,16 @@ typedef TCB_t list_value_type;
 
 #include "q.h"
 
+size_t tid(TCB_t* tcb)
+{
+    return tcb->data;
+}
+
 void init_TCB (TCB_t *tcb, void *function, void *stackP, int stack_size)
 {
     static size_t g_tid = 0;
 
-    tcb->tid = ++g_tid;
+    tcb->data = ++g_tid;
     getcontext(&tcb->ctx);
     tcb->ctx.uc_stack.ss_sp = stackP;
     tcb->ctx.uc_stack.ss_size = stack_size;

@@ -37,6 +37,7 @@ typedef test_item_t list_value_type;
 
 std::ostream& operator<<(std::ostream& o, Q q)
 {
+#if YOU_LOVE_CPP_AND_WANT_CODE_TO_WORK
     if(q.nil->next == q.nil)
         o << "[]";
 
@@ -48,6 +49,13 @@ std::ostream& operator<<(std::ostream& o, Q q)
         o << " ]> ";
     }
     o << '\n';
+#else //i.e. you don't want things to work
+    char* str = new char[4096];
+    Print(str, &q);
+    o << str;
+    delete [] str;
+#endif
+
     return o;
 }
 

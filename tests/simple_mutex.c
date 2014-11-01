@@ -21,6 +21,7 @@ void do_it()
 
 int main(int argc, const char *argv[])
 {
+    InitQ(&RunQ);
     init_sem(&mutex, 1);
     start_thread(do_it);
     start_thread(do_it);

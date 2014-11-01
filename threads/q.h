@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -73,6 +74,11 @@ list_value_type* PrevQ(Q* q)
         return q->curr->prev->prev;
 }
 
+list_value_type* CurrQ(Q* q)
+{
+    return q->curr;
+}
+
 
 void AddQ(Q* q, list_value_type * x)
 {
@@ -124,5 +130,26 @@ list_value_type* DelQ(Q* q) // will return a pointer to the item deleted.
 
     invariants(q);
     return x;
+}
+
+void Print(char * str, Q* q)
+{
+    char temp[4096];
+    list_value_type* i;
+    str[0] = '\0';
+    if(q->nil->next == q->nil)
+        sprintf(str, "[]");
+
+    for(i = q->nil->next;
+            i != q->nil; 
+            i = i->next)
+    {
+        strcat(str, "<[ ");
+        sprintf(temp, "%d", i->data);
+        strcat(str, temp);
+        if (q->curr == i) strcat(str, " (c)");
+        strcat(str, " ]> ");
+    }
+    strcat(str, "\n");
 }
 

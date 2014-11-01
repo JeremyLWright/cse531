@@ -28,6 +28,7 @@ void f2()
 
 int main(int argc, const char *argv[])
 {
+    InitQ(&RunQ);
     init_sem(&mutex, 1);
     start_thread(f1);
     start_thread(f1);

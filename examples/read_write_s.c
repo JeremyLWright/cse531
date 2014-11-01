@@ -107,6 +107,7 @@ void writer(void)
 
 int main()
 {
+    InitQ(&RunQ); //I fucking hate C!!!! I miss constructors.
     init_sem(&mutex, 1);
     init_sem(&r_sem, 0);
     init_sem(&w_sem, 0);
