@@ -20,6 +20,9 @@ include_directories(threads)
 add_executable(thread_test thread_test.c)
 add_executable(example examples/example.c)
 add_executable(read_write_s examples/read_write_s.c)
+add_executable(simple_mutex tests/simple_mutex.c)
+add_executable(simple_mutex2 tests/simple_mutex2.c)
+add_executable(santa tests/santa_problem.c)
 
 add_subdirectory(p-threads)
 

@@ -1,14 +1,6 @@
 #pragma once
 #include "threads.h"
 
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
 #ifdef DEBUG
 #define S_TRACE() do{ printf(ANSI_COLOR_GREEN "%s:%d Sem%lu=%d Thread: %lu\n" ANSI_COLOR_RESET,  __func__, __LINE__, sem->sid, sem->count, sem->WaitQ.curr->tid); } while(0);
 #define T_TRACE() do{ printf(ANSI_COLOR_BLUE"%s:%d Sem%lu=%d Thread: %lu\n" ANSI_COLOR_RESET, __func__, __LINE__, sem->sid, sem->count, RunQ.curr->tid); } while(0);
@@ -19,6 +11,7 @@
 typedef struct _semaphore_t
 {
     int count;
+    int wakeups;
     Q WaitQ;
     size_t sid;
 } semaphore_t;
@@ -29,38 +22,55 @@ void init_sem(semaphore_t* s, int val)
 
     InitQ(&s->WaitQ);
     s->count = val;
+    s->wakeups = 0;
     s->sid = ++gid;
 }
 
+#if 0 //INSPIRED_EXAMPLE_FROM_WIKIPEDIA
+#include <stdio.h>
+#include <ucontext.h>
+#include <unistd.h>
+ 
+int main(int argc, const char *argv[]){
+	ucontext_t context;
+ 
+	getcontext(&context);
+	puts("Hello world");
+	sleep(1);
+	setcontext(&context);
+	return 0;
+}
+#endif
+
 void sem_yield(semaphore_t* sem)
 {
-    T_TRACE();
-    RotateQ(&sem->WaitQ); 
-    AddQ(&sem->WaitQ, DelQ(&RunQ));
-    S_TRACE();
-    swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->ctx);
+    //swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->ctx);
 }
 
 void P(semaphore_t* sem)
 {
-    T_TRACE();
-    if(sem->count > 0)
+    sem->count--;
+    if(sem->count < 0)
     {
-        --sem->count;
-    }
-    else
-    {
-        sem_yield(sem);
+        AddQ(&sem->WaitQ, DelQ(&RunQ));
+        T_TRACE();
+        swapcontext(&sem->WaitQ.curr->ctx, &RunQ.curr->ctx);
+        printf(ANSI_COLOR_YELLOW "Return from swap.\n" ANSI_COLOR_RESET);
+       // getcontext(&sem->WaitQ.curr->ctx);
+       // if(sem->count < 0) setcontext(&RunQ.curr->ctx);
+        //sem->wakeups--;
     }
 }
 
 void V(semaphore_t* sem)
 {
-    ++sem->count;
     T_TRACE();
+    sem->count++;
     if(sem->count <= 0)
     {   
+        printf(ANSI_COLOR_MAGENTA "Unblocking thread.\n" ANSI_COLOR_RESET);
         S_TRACE();
+        //sem->wakeups++;
         AddQ(&RunQ, DelQ(&sem->WaitQ));
     }
     yield();

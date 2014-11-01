@@ -16,7 +16,7 @@ void start_thread(void (*function)(void))
     //allocate a stack (via malloc) of a certain size (choose 8192)
     int const  stack_size = 8192;
     void* stackP = malloc(stack_size*sizeof(char));
-    list_parameter_t* tcb = (list_parameter_t*)malloc(sizeof(list_parameter_t));
+    list_value_type* tcb = (list_value_type*)malloc(sizeof(list_value_type));
     init_TCB (tcb, function, stackP, stack_size);
     AddQ(&RunQ, tcb);
 }
@@ -31,6 +31,9 @@ void run()
 void yield()
 {
     RotateQ(&RunQ); 
+#ifdef DEBUG
+    printf(ANSI_COLOR_MAGENTA "%s:%d From T%lu to T%lu Size: %lu\n" ANSI_COLOR_RESET,  __func__, __LINE__, RunQ.curr->prev->tid, RunQ.curr->tid, size_(&RunQ));
+#endif
     swapcontext(&RunQ.curr->prev->ctx, &RunQ.curr->ctx);
 }
 

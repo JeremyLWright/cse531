@@ -1,6 +1,8 @@
 /*******************************************************************************
  * FILENAME:    q.h
- * DESCRIPTION: TCB queue implementation for user-space threads
+ * DESCRIPTION: TCB queue implementation for user-space threads. This queue's 
+ * implementation is based on Cormen, Leiserson, Rivest, Stein, Introduction to 
+ * Algorithms
  * AUTHOR:      Jeremy Wright, Matt Welch
  * SCHOOL:      Arizona State University
  * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
@@ -9,6 +11,17 @@
  *******************************************************************************/
 #pragma once
 #include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 /*----------------------- q.h --------------------------------------------*/
 #ifndef LIST_PARAM
 typedef struct _test_item_t {
@@ -16,79 +29,92 @@ typedef struct _test_item_t {
     struct _test_item_t* next;
     struct _test_item_t* prev;
 } test_item_t;
-typedef test_item_t list_parameter_t;
+typedef test_item_t list_value_type;
     #define LIST_PARAM
 #endif
 
 typedef struct _Q {
-    list_parameter_t* head;
-    list_parameter_t* tail;
-    list_parameter_t* curr;
+    list_value_type* nil; 
+    list_value_type* head;
+    list_value_type* tail;
+    list_value_type* curr;
     size_t size;
 } Q;
+
+void invariants(Q* q)
+{
+    //assert(q->nil->tail->next == q->nil);
+}
 
 void InitQ(Q* q)
 {
     memset(q, 0, sizeof(Q));
+    q->nil = (list_value_type*)malloc(sizeof(list_value_type));
+    q->nil->next = q->nil;
+    q->nil->prev = q->nil;
+    q->head = q->nil;
+    q->tail = q->nil;
 }
 size_t size_(Q* q)
 {
+    invariants(q);
     return q->size;
 }
-void AddQ(Q* q, list_parameter_t * item)
+void AddQ(Q* q, list_value_type * x)
 {
-    if(item == 0 || q == 0)
+    if(x == 0 || q == 0)
         return;
-
-    if(q->head == 0)
-    {
-        item->prev = item;
-        item->next = item;
-        q->head = item;
-        q->curr = item;
-    }
-    else
-    {
-        q->head->prev = item;
-        q->tail->next = item;
-        item->prev = q->tail;
-        item->next = q->head;
-    }
-    q->tail = item;
-    ++q->size;
+    
+    invariants(q);
+   
+    x->next = q->nil->next;
+    q->nil->next->prev = x;
+    q->nil->next = x;
+    x->prev = q->nil;
+    
+    q->size++;
+    
+    if(size_(q) == 1)
+        q->curr = x;
+    
+    invariants(q);
 }
 
-list_parameter_t* DelQ(Q* q) // will return a pointer to the item deleted.
+list_value_type* DelQ(Q* q) // will return a pointer to the item deleted.
 {
     //Are we empty?
-    if(q->head == 0 || q->curr == 0 || q->tail == 0 || q->size == 0)
+    if(q == 0 || q->head == 0 || q->curr == 0 || size_(q) == 0)
     {   
         return 0;
     }
-    list_parameter_t* r = q->curr;
-    list_parameter_t* prev = q->curr->prev;
-    list_parameter_t* next = q->curr->next;
-    prev->next = next;
-    next->prev = prev;
-    q->curr = next;
-    --q->size;
-    //if(q->size == 0)
-    //{
-    //    q->head = 0;
-    //    q->tail = 0;
-    //}
+    
+    invariants(q);
+    list_value_type* x = q->curr;
 
-    return r;
+    x->prev->next = x->next;
+    x->next->prev = x->prev;
+
+    q->size--;
+
+    invariants(q);
+    return x;
 }
-list_parameter_t* RotateQ(Q* q)
+list_value_type* RotateQ(Q* q)
 {
     if(q->head == 0 || q->curr == 0)
         return 0;
-    q->curr = q->curr->next;
+    invariants(q);
+
+    if(q->curr->next != q->nil)
+        q->curr = q->curr->next;
+    else
+        q->curr = q->curr->next->next;
+
+    invariants(q);
     return q->curr;
 }
 
-list_parameter_t* PeekQ(Q* q)
+list_value_type* PeekQ(Q* q)
 {
 	return q->curr;
 }

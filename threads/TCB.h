@@ -21,10 +21,9 @@ typedef struct _TCB_t {
     struct _TCB_t* prev;
     size_t tid;
 } TCB_t;
-#ifndef LIST_PARAM
-    #define LIST_PARAM
-    typedef TCB_t list_parameter_t;
-#endif
+
+#define LIST_PARAM
+typedef TCB_t list_value_type;
 
 #include "q.h"
 
