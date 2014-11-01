@@ -8,6 +8,15 @@
  * TERM:        Fall 2014
  *******************************************************************************/
 extern "C" {
+
+typedef struct _test_item_t {
+    int data;
+    struct _test_item_t* next;
+    struct _test_item_t* prev;
+} test_item_t;
+typedef test_item_t list_value_type;
+#define LIST_PARAM
+
 #include "threads/q.h"
 }
 
@@ -28,6 +37,9 @@ extern "C" {
 
 std::ostream& operator<<(std::ostream& o, Q q)
 {
+    if(q.nil->next == q.nil)
+        o << "[]";
+
     for(list_value_type* i = q.nil->next; i != q.nil; i = i->next)
     {
         o << "<[ ";
@@ -116,13 +128,17 @@ TEST_F(Directed, Rotate)
 
     std::cout << q << '\n';
 
-    for(int i = 0; i < 1000; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         ASSERT_EQ(0, PeekQ(&q)->data);
         ASSERT_EQ(3, RotateQ(&q)->data);
+    std::cout << q << '\n';
         ASSERT_EQ(2, RotateQ(&q)->data);
+    std::cout << q << '\n';
         ASSERT_EQ(1, RotateQ(&q)->data);
+    std::cout << q << '\n';
         ASSERT_EQ(0, RotateQ(&q)->data);
+    std::cout << q << '\n';
     }
 }
 
@@ -157,6 +173,7 @@ TEST_F(Directed, TwoQueues)
     AddQ(&RunQ, items+2);
     AddQ(&RunQ, items+3);
     std::cout << RunQ << '\n';
+    
 
 }
 
@@ -169,12 +186,44 @@ TEST_F(Directed, AddDoesntMoveCurrent)
     items[1].data = 2;
     items[2].data = 3;
     items[3].data = 4;
-    AddQ(&RunQ, items);
+    for(int i = 0; i < 4; ++i) AddQ(&RunQ, items + i);
 
     auto old_current = RunQ.curr;
 
     AddQ(&RunQ, items+1);
     ASSERT_TRUE(old_current == RunQ.curr);
+}
+
+TEST_F(Directed, DelMovesCurrentToNext)
+{
+    Q RunQ;
+    InitQ(&RunQ);
+    list_value_type items[4];
+    items[0].data = 1;
+    items[1].data = 2;
+    items[2].data = 3;
+    items[3].data = 4;
+    for(int i = 0; i < 4; ++i) AddQ(&RunQ, items + i);
+
+    std::cout << RunQ << '\n';
+    ASSERT_EQ(1, RunQ.curr->data);
+    DelQ(&RunQ);
+   
+    std::cout << RunQ << '\n';
+    ASSERT_EQ(4,  RunQ.curr->data);
+    DelQ(&RunQ);
+
+    std::cout << RunQ << '\n';
+    ASSERT_EQ(3,  RunQ.curr->data);
+    DelQ(&RunQ);
+
+    std::cout << RunQ << '\n';
+    ASSERT_EQ(2,  RunQ.curr->data);
+    DelQ(&RunQ);
+    
+    std::cout << RunQ << '\n';
+    ASSERT_EQ(2,  RunQ.curr->data);
+    DelQ(&RunQ); //Shouldn't crash
 }
 
 
