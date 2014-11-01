@@ -97,7 +97,7 @@ void func4(void)
 
 int main(int argc, char *argv[])
 {
-    int i ;
+    int i = 0;
     int totalThreads = 10;
     if (argc > 1){
         totalThreads = atoi(argv[1]);
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     start_thread(func2);
     start_thread(func3);
     start_thread(func4);
-    for (; i < totalThreads; i++) {
+    for (i = 0; i < totalThreads; i++) {
         start_thread(func1);
     }
  
