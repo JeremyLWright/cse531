@@ -22,16 +22,32 @@ extern "C" {
 #include "Directed.hpp"
 #include "utils.hpp"
 #include "tests/Model.hpp"
+#include <ostream>
+#include <istream>
+#include <iostream>
+
+std::ostream& operator<<(std::ostream& o, Q q)
+{
+    for(list_value_type* i = q.nil->next; i != q.nil; i = i->next)
+    {
+        o << "<[ ";
+        o << i->data;
+        if (q.curr == i) o << " (c)";
+        o << " ]> ";
+    }
+    o << '\n';
+    return o;
+}
 
 TEST_F(Directed, Add)
 {
     repeat_n(100, [&](size_t i)
-    {
-        test_item_t* t = new test_item_t;
-        t->data = i;
-        AddQ(&q, t);
-        ASSERT_EQ(i+1, size_(&q));
-    });
+            {
+            test_item_t* t = new test_item_t;
+            t->data = i;
+            AddQ(&q, t);
+            ASSERT_EQ(i+1, size_(&q));
+            });
 
     ASSERT_EQ(100, size_(&q));
     repeat_n(100, [&](size_t i){ DelQ(&q); });
@@ -61,7 +77,7 @@ TEST_F(Directed, RotateEmpty)
 TEST_F(Directed, CreateBadCondition)
 {
     InitQ(&q);
-    q.head = (list_parameter_t*)1;
+    q.head = (list_value_type*)1;
     RotateQ(&q);
 }
 TEST_F(Directed, RotateOne)
@@ -92,21 +108,22 @@ TEST_F(Directed, Rotate)
     size_t const test_size = 4;
     test_item_t data[test_size];
 
-    repeat_n(test_size, [&](size_t i){ 
+    for(size_t i = 0; i < test_size; ++i)
+    {
         data[i].data = i;
-        AddQ(&q, &data[i]);
-    });
+        AddQ(&q, data + i);
+    }
 
-    repeat_n(1000, [&](size_t i){ 
+    std::cout << q << '\n';
+
+    for(int i = 0; i < 1000; ++i)
+    {
         ASSERT_EQ(0, PeekQ(&q)->data);
-        ASSERT_EQ(1, RotateQ(&q)->data);
-        ASSERT_EQ(1, PeekQ(&q)->data);
-        ASSERT_EQ(2, RotateQ(&q)->data);
-        ASSERT_EQ(2, PeekQ(&q)->data);
         ASSERT_EQ(3, RotateQ(&q)->data);
-        ASSERT_EQ(3, PeekQ(&q)->data);
+        ASSERT_EQ(2, RotateQ(&q)->data);
+        ASSERT_EQ(1, RotateQ(&q)->data);
         ASSERT_EQ(0, RotateQ(&q)->data);
-    });
+    }
 }
 
 TEST_F(Model, AddDel)
@@ -119,10 +136,45 @@ TEST_F(Model, AddDel)
         AddQ(&q, &data[i]);
     });
 
-    repeat_n(test_size, [&](size_t i)
+    for(size_t i = test_size; i > test_size; --i)
     {
         ASSERT_EQ(i, DelQ(&q)->data);
-    });
+    }
+}
+
+TEST_F(Directed, TwoQueues)
+{
+    Q RunQ;
+    InitQ(&RunQ);
+    //Q SemQ;
+    list_value_type items[4];
+    items[0].data = 1;
+    items[1].data = 2;
+    items[2].data = 3;
+    items[3].data = 4;
+    AddQ(&RunQ, items);
+    AddQ(&RunQ, items+1);
+    AddQ(&RunQ, items+2);
+    AddQ(&RunQ, items+3);
+    std::cout << RunQ << '\n';
+
+}
+
+TEST_F(Directed, AddDoesntMoveCurrent)
+{
+    Q RunQ;
+    InitQ(&RunQ);
+    list_value_type items[4];
+    items[0].data = 1;
+    items[1].data = 2;
+    items[2].data = 3;
+    items[3].data = 4;
+    AddQ(&RunQ, items);
+
+    auto old_current = RunQ.curr;
+
+    AddQ(&RunQ, items+1);
+    ASSERT_TRUE(old_current == RunQ.curr);
 }
 
 
