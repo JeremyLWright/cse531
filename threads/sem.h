@@ -1,3 +1,12 @@
+/*******************************************************************************
+ * FILENAME:    sem.h
+ * DESCRIPTION: Semaphore implementation using user level threads
+ * AUTHOR:      Jeremy Wright, Matt Welch
+ * SCHOOL:      Arizona State University
+ * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
+ * INSTRUCTOR:  Dr. Partha Dasgupta
+ * TERM:        Fall 2014
+ *******************************************************************************/
 #pragma once
 #include "threads.h"
 

@@ -107,10 +107,10 @@ void init_seq_02(void)
 int main(int argc, const char *argv[])
 {
     InitQ(&RunQ);
-    init_sem(&santaSem, 0);
-    init_sem(&reindeerSem, 0);
-    init_sem(&mutex, 1);
-    init_sem(&elfMutex, 1);
+    santaSem    = CreateSem(0);
+    reindeerSem = CreateSem(0);
+    mutex       = CreateSem(1);
+    elfMutex    = CreateSem(1);
 
     init_seq_01();
 

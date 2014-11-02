@@ -1,5 +1,12 @@
-// (c) Partha Dasgupta 2009
-// permission to use and distribute granted.
+/*******************************************************************************
+ * FILENAME:    read_write.c
+ * DESCRIPTION: Demonstration application for user level semaphores.
+ * AUTHOR:      Jeremy Wright, Matt Welch
+ * SCHOOL:      Arizona State University
+ * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
+ * INSTRUCTOR:  Dr. Partha Dasgupta
+ * TERM:        Fall 2014
+ *******************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -17,8 +24,8 @@ void reader_entry(int ID)
 	if (wwc > 0 || wc > 0) {
 	    printf("[reader: #%d]\tblocking for writer\n", ID);
 	    rwc++;		// increment waiting reader count.
-	    V(&mutex);		// let other processes use the mutex.
-	    P(&r_sem);		// sleep on r_sem
+	    V(&mutex);  // let other processes use the mutex.
+	    P(&r_sem);  // sleep on r_sem
 	    rwc--;		// program now has mutex and r_sem, go
 			        // into CS.
 	}
@@ -115,7 +122,6 @@ int main()
     start_thread(reader);
     start_thread(reader);
     start_thread(reader);
-    start_thread(writer);
     start_thread(writer);
     start_thread(writer);
     run();
