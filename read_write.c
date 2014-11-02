@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "sem.h"
+#include "threads/sem.h"
 
 semaphore_t r_sem, w_sem, mutex;
 int rwc = 0, wwc = 0, rc = 0, wc = 0, global_ID=0;
@@ -107,10 +107,10 @@ void writer(void)
 
 int main()
 {
-    InitQ(&RunQ); //I fucking hate C!!!! I miss constructors.
-    init_sem(&mutex, 1);
-    init_sem(&r_sem, 0);
-    init_sem(&w_sem, 0);
+    InitQ(&RunQ);
+    mutex = CreateSem(1);
+    r_sem = CreateSem(0);
+    w_sem = CreateSem(0);
     start_thread(reader);
     start_thread(reader);
     start_thread(reader);

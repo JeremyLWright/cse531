@@ -16,14 +16,15 @@ typedef struct _semaphore_t
     size_t sid;
 } semaphore_t;
 
-void init_sem(semaphore_t* s, int val)
+semaphore_t CreateSem(int val)
 {
     static size_t gid = 0;
-
-    InitQ(&s->WaitQ);
-    s->count = val;
-    s->wakeups = 0;
-    s->sid = ++gid;
+    semaphore_t s;
+    InitQ(&s.WaitQ);
+    s.count = val;
+    s.wakeups = 0;
+    s.sid = ++gid;
+    return s;
 }
 
 #if 0 //INSPIRED_EXAMPLE_FROM_WIKIPEDIA
