@@ -24,6 +24,10 @@ add_executable(simple_mutex tests/simple_mutex.c)
 add_executable(simple_mutex2 tests/simple_mutex2.c)
 add_executable(santa tests/santa_problem.c)
 
+add_executable(port1 tests/port.test.c)
+add_executable(port2 tests/port2.test.c)
+add_executable(port3 tests/port3.test.c)
+
 add_subdirectory(p-threads)
 
 include(ExternalProject)

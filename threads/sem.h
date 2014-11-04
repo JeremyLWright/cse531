@@ -60,6 +60,7 @@ void P(semaphore_t* sem)
         //Save the current thread.
         list_value_type* current_thread = CurrQ(&RunQ);
         AddQ(&sem->WaitQ, DelQ(&RunQ)); //Adding does not set the current pointer, so we need a temporary
+        check_deadlock();
 #ifdef DEBUG
         T_TRACE();
         {//Print the queues for prettiness

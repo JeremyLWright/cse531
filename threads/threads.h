@@ -28,9 +28,18 @@ void run()
     swapcontext(&parent, &CurrQ(&RunQ)->ctx);
 }
 
+void check_deadlock()
+{
+    if(size_(&RunQ) == 0)
+    {
+        fprintf(stderr, "Thread Deadlock detected. No Runnable threads.\n");
+        abort(); //Deadlock detected.
+    }
+}
+
 void yield()
 {
-    assert(size_(&RunQ) > 0);
+    check_deadlock();
     RotateQ(&RunQ); 
 #ifdef DEBUG
     {

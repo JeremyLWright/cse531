@@ -1,8 +1,9 @@
 /*******************************************************************************
  * FILENAME:    q.h
- * DESCRIPTION: TCB queue implementation for user-space threads. This queue's 
- * implementation is based on Cormen, Leiserson, Rivest, Stein, Introduction to 
- * Algorithms
+ * DESCRIPTION: Intrusive queue implementation for user-space threads. 
+ * This queue's implementation is based on Cormen, Leiserson, Rivest, Stein, 
+ * Introduction to Algorithms
+ *
  * AUTHOR:      Jeremy Wright, Matt Welch
  * SCHOOL:      Arizona State University
  * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
