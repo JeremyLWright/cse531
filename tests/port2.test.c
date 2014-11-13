@@ -48,8 +48,8 @@ void reader(void)
 
 int main(int argc, const char *argv[])
 {
-    printf("If there are no available readers to clear the port queue,\n
-    this test will crash with a deadlock after 10 iterations.\n\
+    printf("If there are no available readers to clear the port queue,\n\
+this test will crash with a deadlock after 10 iterations.\n\
 There are no readers to pull from the queue, thus the writer \n\
 will fill up the queue, get pushed on the semaphore's queue, \n\
 then the process will exit since there are no runnable threads.\n");
