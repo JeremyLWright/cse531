@@ -17,8 +17,11 @@ void server(void)
         printf("I am the server (%lu)!\n", my_tid);
         for(j = 0; j < NUM_PORTS; ++j)
         {
+            // the server should receive from the client then 
             message_t response = Receive(&ports[j]);
+            // do some work
             response.payload[1]++;
+            // send back to the client
             Send(&ports[j], response);
         }
     }
@@ -37,7 +40,10 @@ void client(void)
         payload[1] = i++;
         printf("[%lu] Sending: %d\n", my_tid, payload[1]);
         message_t msg = make_message(payload, message_size);
+        // the client should send to the server
         Send(&ports[my_tid-1], msg);
+        // do NOTHING until the server returns the message
+        // wait on a receive on some port
         message_t recvd = Receive(&ports[my_tid-1]);
         printf("[%lu] Received: %d\n", my_tid, recvd.payload[1]);
         usleep(100);

@@ -6,22 +6,28 @@ typedef int message_value_type;
 
 Port_t portA;
 int payload1a[] = {1,2,3,4};
+int writer_id = 0;
+int reader_id = 0;
 
 void writer(void)
 {
+    int myID = ++writer_id;
+    printf("Writer thread [%d] beginning\n",myID);
     int j = 0;
     while(1)
     {
         message_t msg1a = make_message(payload1a, 4);
         Send(&portA, msg1a);
         sleep(1);
-        printf("Writer Run: %d\n", ++j);
+        printf("Writer[%d] Run: %d\n", myID, ++j);
         printf("Successful Writes: %lu\n", portA.write_idx);
     }
 }
 
 void reader(void)
 {
+    int myID = ++reader_id;
+    printf("\tReader thread [%d] beginning\n", myID);
     int i, j = 0;
     while(1)
     {
@@ -29,7 +35,7 @@ void reader(void)
         for(i = 0; i < sizeof(payload1a)/sizeof(message_value_type); ++i)
             assert(payload1a[i] == msg1b.payload[i]);
         sleep(1);
-        printf("Reader Run: %d\n", ++j);
+        printf("\tReader[%d] Run: %d\n", myID, ++j);
     }
 }
 
