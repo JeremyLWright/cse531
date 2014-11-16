@@ -42,13 +42,13 @@ void reader(void)
 
 int main(int argc, const char *argv[])
 {
-    printf("This should be stable.");
+    printf("This should be stable.\n");
 
     InitQ(&RunQ);
     PortInit(&portA, 10);
     start_thread(writer);
     start_thread(writer);
-    start_thread(writer);
+    start_thread(reader);
     start_thread(reader);
     run();
     return 0;

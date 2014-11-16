@@ -1,6 +1,7 @@
 typedef int message_value_type;
-#define message_size        10
-#define PORT_DEPTH          10
+#define message_size        10  // For simplicity, a message is an array of 10 integers.
+#define PORT_DEPTH          10  // make N=10 (num  msgs in buffer)
+// Declare a set (array of ports). The ports are numbered 0 to 99.
 #define NUM_PORTS           100 //Final requirement is 100
 #include "msgs.h"
 #include <assert.h>
@@ -54,9 +55,10 @@ void client(void)
 int main(int argc, const char *argv[])
 {
     int i;
-    printf("This should be stable.");
+    printf("This should be stable.\n");
 
     InitQ(&RunQ);
+    // Declare a set (array of ports). The ports are numbered 0 to 99.
     for(i = 0; i < NUM_PORTS; ++i)
         PortInit(&ports[i], PORT_DEPTH);
     
