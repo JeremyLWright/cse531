@@ -2,3 +2,9 @@ build
 tags
 *.cmake
 
+*.swp
+.*.swp
+port1
+port2
+port3
+port4
