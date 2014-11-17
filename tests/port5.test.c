@@ -44,7 +44,6 @@ port_id_t chooseServer(){
 
 void server(void)
 {// server should listen on his own port only
-    int j = 0;
     const size_t my_tid = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
     port_id_t destPort = -1;
