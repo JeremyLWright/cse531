@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * FILENAME:    msgs.h
+ * DESCRIPTION: message passing interface file implementing message_t, Port_t, 
+ *              Send(), and Receive()
+ * AUTHOR:      Jeremy Wright, Matt Welch
+ * SCHOOL:      Arizona State University
+ * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
+ * INSTRUCTOR:  Dr. Partha Dasgupta
+ * TERM:        Fall 2014
+ *******************************************************************************/
 #pragma once
 #include "sem.h" // include sem.h in the file msgs.h
 #include <assert.h>
@@ -57,7 +67,9 @@ void Send(Port_t* port, const message_t msg)
     // TODO: sem wait on the port mutex
     //P(&port->mutex);
     {
+#ifdef DEBUG
         printf("\tProducer Sem: %d\n", port->producer_sem.count);
+#endif    
         // sem wait on the port's producer semaphore.  Block if port is full
         P(&port->producer_sem);
             // copy the contents of the message into the ports buffer
@@ -91,8 +103,10 @@ message_t Receive(Port_t* port)
             port->read_idx = port->read_idx % port->max_size;
             // sem signal to waiting producers to indicate there's room in the port buffer
             V(&port->producer_sem); //Unblock any waiting producers to notify we read
+#ifdef DEBUG
             printf("\t\tConsumer Sem: %d\n", port->consumer_sem.count);
             printf("\t\tProducer Sem: %d\n", port->producer_sem.count);
+#endif
     }
      // sem signal on the lock to indicate we're done with the port
     //V(&port->mutex);

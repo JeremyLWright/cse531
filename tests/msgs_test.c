@@ -1,6 +1,6 @@
 /*******************************************************************************
- * FILENAME:    
- * DESCRIPTION: 
+ * FILENAME:    msgs_test.c
+ * DESCRIPTION: Test program for message passing system with multiple servers & clients
  * AUTHOR:      Jeremy Wright, Matt Welch
  * SCHOOL:      Arizona State University
  * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
@@ -147,7 +147,7 @@ int main(int argc, const char *argv[])
     printf("Servers perform addition on two integers sent by clients and pass back the result\n");
     printf("Spawning %d servers listening on ports 0 to %d\n", nServer, nServer-1);
     printf("Spawning %d clients with receive ports %d to %d\n\n", nClient, nServer, nServer+nClient-1);
-    printf("Press any key to continue:\n");
+    printf("Press 'Enter' to continue:\n");
     c=getchar();
 
     InitQ(&RunQ);
