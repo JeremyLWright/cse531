@@ -28,6 +28,7 @@ void fn(void)
 
         for(i = 0; i < sizeof(payload2a)/sizeof(message_value_type); ++i)
             assert(msg2a.payload[i] == msg2b.payload[i]);
+
         sleep(1);
         printf("Run: %d\n", ++j);
     }

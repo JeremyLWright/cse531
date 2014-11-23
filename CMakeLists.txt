@@ -29,6 +29,7 @@ add_executable(port2 tests/port2.test.c)
 add_executable(port3 tests/port3.test.c)
 add_executable(port4 tests/port4.test.c)
 add_executable(port5 tests/port5.test.c)
+add_executable(cl-svr tests/cl-svr.c)
 
 add_subdirectory(p-threads)
 
