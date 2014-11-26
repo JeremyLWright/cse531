@@ -177,13 +177,25 @@ port_id_t chooseServer(){
     return (server_port);
 }
 
+void print_table(chunk_t* table, size_t len)
+{
+    int i = 0;
+    printf("Printing String Table:\n");
+    for(i = 0; i < len; ++i)
+    {
+        printf("\t[%d] Length: %d - %s\n", i, table[i].len, table[i].start);
+    }
+}
+
 
 void server(void)
 {// server should listen on his own port only
     size_t i;
+    int j;
     const size_t my_tid = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
     //port_id_t destPort = -1;
+    int counter = 0;
     size_t clientID = 0;
     const size_t MAX_STRING_SIZE = 4096;
 
@@ -205,6 +217,7 @@ void server(void)
 
     while(1)
     {
+        
         message_t recvd = Receive(&ports[myPort]);
         switch(recvd.payload[0].header.command)
         {
@@ -215,6 +228,14 @@ void server(void)
                         string_table[recvd.payload[0].header.idx%10].start + start_position,
                         recvd.payload[0].payload.payload,
                         recvd.payload[0].payload.len);
+                ////TODO This needs to be moved to the read client
+                if(counter > 100000)
+                {
+                    counter = 0;
+                    print_table(string_table, 10);
+                }
+                counter++;
+                ////End TODO
                 break;
             case Delete:
                 string_table[recvd.payload[0].header.idx%10].len = 0;
@@ -223,29 +244,33 @@ void server(void)
             case Read:
                 {
                     int dest = recvd.payload[0].header.source_port;
-                packet_t* packets = make_packet(
-                        string_table[recvd.payload[0].header.idx%10].start,
-                        string_table[recvd.payload[0].header.idx%10].len,
-                        myPort,
-                        dest,
-                        &n);
-                if(n == 0)
-                {
-                    message_t m;
-                    m.payload_size = 1;
-                    m.payload[0].payload.len = 0;
-                    Send(&ports[dest], m);
-                }
+                    for(j = 0; j < 10; ++j)
+                    {
+                        packet_t* packets = make_packet(
+                                string_table[j].start,
+                                string_table[j].len,
+                                myPort,
+                                dest,
+                                &n);
+                        if(n == 0)
+                        {
+                            message_t m;
+                            m.payload_size = 1;
+                            m.payload[0].payload.len = 0;
+                            Send(&ports[dest], m);
+                        }
 
-                for(i = 0; i < n; ++i)
-                {
-                    message_t m;
-                    m.payload_size = 1;
-                    memcpy(m.payload, &packets[i], sizeof(message_value_type));
-                    fprintf(stderr, "Sending to: %d\n", dest);
-                    Send(&ports[dest], m);
-                }
-                free(packets);
+                        for(i = 0; i < n; ++i)
+                        {
+                            message_t m;
+                            m.payload_size = 1;
+                            memcpy(m.payload, &packets[i], sizeof(message_value_type));
+                            m.payload[0].header.idx = j;
+                            //fprintf(stderr, "Sending to: %d\n", dest);
+                            Send(&ports[dest], m);
+                        }
+                        free(packets);
+                    }
                 }
                 break;
         }
@@ -267,7 +292,7 @@ void write_client(void)
     while(1)
     {
         current_msg = randint(total_msgs-4);
-        
+
         if(command == 0)
         {
             memcpy(msg, anchor_man_01+(PAYLOAD_SIZE*current_msg), WRITE_SIZE);
@@ -278,7 +303,7 @@ void write_client(void)
         }
         size_t n = 0;
         packet_t* packets = make_packet(msg, WRITE_SIZE, myPort, mySvr, &n);
-        printf("Sending '%s' from %d to %d in %lu packets\n", msg, myPort, mySvr, n);
+        //printf("Sending '%s' from %d to %d in %lu packets\n", msg, myPort, mySvr, n);
         for(i = 0; i < n; ++i)
         {
             message_t m;
@@ -295,6 +320,7 @@ void write_client(void)
     }
 }
 
+
 void read_client(void)
 {
     const size_t my_tid = tid(CurrQ(&RunQ));
@@ -307,6 +333,8 @@ void read_client(void)
     //int j = randint(NUM_PORTS);
     // payload contents: {my_tid, myPort, myInteger,...}
     payload[0] = my_tid;
+    int i = 0;
+    chunk_t string_table[10];
 
     while(1)
     {
@@ -318,12 +346,23 @@ void read_client(void)
         packet.header.command = Read;
         packet.header.source_port = myPort;
         packet.header.dest_port = mySvr;
+
         memcpy(m.payload, &packet, sizeof(message_value_type));
-        Send(&ports[mySvr], m);
+        //////// Matt... The dead lock is happing with an interaction between
+        //the server sending lots of packets and us trying to receieve them.  
+        //Send(&ports[mySvr], m);
         m = Receive(&ports[myPort]);
-        printf("Receiving on: %d\n", myPort);
-        printf("I got a message.");
-        sleep(1);
+        for(i = 1; i < m.payload[0].header.total_num_packets; ++i)
+        {
+            m = Receive(&ports[myPort]);
+            string_table[m.payload[0].header.idx%10].len = m.payload[0].header.total_num_packets*PAYLOAD_SIZE;
+            size_t start_position = m.payload[0].header.sequence_number*PAYLOAD_SIZE;
+            memcpy(
+                    string_table[m.payload[0].header.idx].start + start_position,
+                    m.payload[0].payload.payload,
+                    m.payload[0].payload.len);
+        }
+        print_table(string_table, 10);
     }
 
 }
@@ -332,7 +371,7 @@ void read_client(void)
 
 int test_chunker()
 {
-    const char msg1[]=
+    char msg1[]=
         "This is a long m" 
         "essage that talk"
         "s about all the "
@@ -442,7 +481,7 @@ int main(int argc, const char *argv[])
 {
     int i;
     initrand();
-    
+
     assert(do_tests() == 0 && "Tests Failed.");
 
     int nServer = NUM_SERVERS;
@@ -459,7 +498,7 @@ int main(int argc, const char *argv[])
     // Declare a set (array of ports). The ports are numbered 0 to 99.
     for(i = 0; i < NUM_PORTS; ++i)
         PortInit(&ports[i], PORT_DEPTH);
-    
+
     start_thread(read_client);
     // start multiple clients
     for(i = NUM_SERVERS; i < (NUM_SERVERS+NUM_CLIENTS) ; ++i)
@@ -468,7 +507,7 @@ int main(int argc, const char *argv[])
     // start 10 servers, listening on ports 0 to 9 (the "known" ports)
     for(i = 0; i < NUM_SERVERS; ++i)
         start_thread(server);
-    
+
 
     run();
     return 0;
