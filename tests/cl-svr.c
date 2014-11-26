@@ -209,16 +209,15 @@ void server(void)
         switch(recvd.payload[0].header.command)
         {
            case Add:
+                string_table[recvd.payload[0].header.idx%10].len = recvd.payload[0].header.total_num_packets*PAYLOAD_SIZE;
+                size_t start_position = recvd.payload[0].header.sequence_number*PAYLOAD_SIZE;
                 memcpy(
-                        string_table[recvd.payload[0].header.idx%10].start,
+                        string_table[recvd.payload[0].header.idx%10].start + start_position,
                         recvd.payload[0].payload.payload,
                         recvd.payload[0].payload.len);
-                string_table[recvd.payload[0].header.idx%10].len = recvd.payload[0].payload.len;
-                printf("Adding Msg: %lu\n", recvd.payload[0].header.idx);
                 break;
             case Delete:
                 string_table[recvd.payload[0].header.idx%10].len = 0;
-                printf("Deleting Msg: \n");
                 break;
 
             case Read:
@@ -262,22 +261,23 @@ void write_client(void)
     uint8_t command = 0;
     const size_t total_msgs = sizeof(anchor_man_01)/PAYLOAD_SIZE;
     size_t current_msg = 0;
-    char msg[PAYLOAD_SIZE];
+    size_t const WRITE_SIZE = PAYLOAD_SIZE*4;
+    char msg[WRITE_SIZE];
     int i;
     while(1)
     {
-        current_msg = randint(total_msgs);
+        current_msg = randint(total_msgs-4);
         
         if(command == 0)
         {
-            memcpy(msg, anchor_man_01+(PAYLOAD_SIZE*current_msg), PAYLOAD_SIZE);
+            memcpy(msg, anchor_man_01+(PAYLOAD_SIZE*current_msg), WRITE_SIZE);
         }
         else
         {
             memset(msg, 0, PAYLOAD_SIZE);
         }
         size_t n = 0;
-        packet_t* packets = make_packet(msg, PAYLOAD_SIZE, myPort, mySvr, &n);
+        packet_t* packets = make_packet(msg, WRITE_SIZE, myPort, mySvr, &n);
         printf("Sending '%s' from %d to %d in %lu packets\n", msg, myPort, mySvr, n);
         for(i = 0; i < n; ++i)
         {
