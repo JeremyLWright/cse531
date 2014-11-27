@@ -49,7 +49,7 @@ typedef packet_t message_value_type; //Set the port to handle an array of packet
 #define NUM_SERVERS 1
 #define NUM_CLIENTS 2  // should not exceed NUM_PORTS - NUM_SERVERS
 #define TABLE_ENTRIES 10 // number of rows in the string table
-
+const size_t MAX_STRING_SIZE = 4096;
 #define THREAD_DELAY 100000
 #include "msgs.h"
 #include <assert.h>
@@ -99,7 +99,7 @@ packet_t* make_packet(
         size_t source_port,
         size_t dest_port,
         size_t* /* [out] */ number_of_packets)
-{// TODO: number_of_packets just needs to be an integer, but we're using a pointer to an integer?
+{
     size_t i = 0;
     chunk_t* c = make_chunks(msg, len, number_of_packets);
     packet_t* packets = (packet_t*)malloc(sizeof(packet_t)**number_of_packets);
@@ -223,7 +223,6 @@ void server(void)
     const size_t myTID = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
     int counter = 0;
-    const size_t MAX_STRING_SIZE = 4096;
     chunk_t serverTable[TABLE_ENTRIES];
     
     printf("Starting server[TID=%lu], listening on port %u !\n", myTID, myPort);
@@ -411,7 +410,16 @@ void read_client(void)
     int stringLen = 0;
     int yieldCount = 1;
     chunk_t clientTable[TABLE_ENTRIES];
+    int sendRequest = 1;
 
+     // initialize string table
+    for(i = 0; i < TABLE_ENTRIES; ++i)
+    {
+        clientTable[i].len = 0;
+        clientTable[i].start = (char*)malloc(MAX_STRING_SIZE);
+        memset(clientTable[i].start, 0, MAX_STRING_SIZE);
+    }
+    
     yield();
     printf("Starting client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
     
@@ -430,30 +438,52 @@ void read_client(void)
             packet.header.dest_port = serverPort;
 
             memcpy(msg.payload, &packet, sizeof(message_value_type));
-            // TODO: lock table so that no other clients may write while this one is reading
-            //printf("Client #%d locking table\n", clientID);
-            //sem_wait(clientID, &tableMutex); 
             //////// Matt... The dead lock is happing with an interaction between
             //the server sending lots of packets and us trying to receieve them.  
-            //printf("Client #%d sending Read request to server...\n", clientID);
-            //Send(&ports[serverPort], msg);
+            // TODO: lock table so that no other clients may write while this one is reading
+            if(sendRequest){
+                printf("Client #%d locking table\n", clientID);
+                sem_wait(clientID, &tableMutex); 
+                printf("Client #%d sending Read request to server...\n", clientID);
+                Send(&ports[serverPort], msg);
+            }
             printf("Client #%d waiting on receive from server...\n", clientID);
-            msg = Receive(&ports[myPort]);
-            for(i = 1; i < msg.payload[0].header.total_num_packets; ++i)
-            {
+            // Receive the first message for the first row of the table
+            int tableRow = 0;
+            do{
                 msg = Receive(&ports[myPort]);
-                tableIdx = msg.payload[0].header.idx%10; // TODO: why modulo by 10?  is this TABLE_ENTRIES?
-                stringLen = msg.payload[0].header.total_num_packets*PAYLOAD_SIZE;
-                clientTable[tableIdx].len = stringLen;
-                size_t start_position = msg.payload[0].header.sequence_number*PAYLOAD_SIZE;
+                header_t firstHeader = msg.payload[0].header;
+                int packetsThisRow = firstHeader.total_num_packets;
+                tableRow = firstHeader.idx % TABLE_ENTRIES;// TODO modulo??
+                stringLen = firstHeader.total_num_packets * PAYLOAD_SIZE;
+                clientTable[tableRow].len = stringLen;
+                int seqNum = firstHeader.sequence_number;
+                printf("Client #%d received table[%d], pkt %d/%d\n", 
+                        clientID, tableRow, seqNum, packetsThisRow);
+                size_t start_position = seqNum*PAYLOAD_SIZE;
                 memcpy(
-                        clientTable[msg.payload[0].header.idx].start + start_position,
+                        clientTable[tableRow].start + start_position,
                         msg.payload[0].payload.payload,
                         msg.payload[0].payload.len);
-            }
+                while(seqNum+1 < packetsThisRow){
+                    // continue receiving packets for this row
+                    msg = Receive(&ports[myPort]);
+                    seqNum = msg.payload[0].header.sequence_number;
+                    printf("Client #%d received table[%d], pkt %d/%d\n", 
+                        clientID, tableRow, seqNum+1, packetsThisRow);
+                    start_position = seqNum * PAYLOAD_SIZE;     
+                    memcpy(
+                            clientTable[tableRow].start + start_position,
+                            msg.payload[0].payload.payload,
+                            msg.payload[0].payload.len);
+                }
+            }while(tableRow < TABLE_ENTRIES);
+             
             // TODO: unlock entire table so that other clients may write
-            //printf("Client #%d locking table\n", clientID);
-            //sem_signal(clientID, &tableMutex); 
+            if(sendRequest){
+                printf("Client #%d locking table\n", clientID);
+                sem_signal(clientID, &tableMutex); 
+            }
             printf("Client #%d printing his received table\n", clientID);
             print_table(clientTable, TABLE_ENTRIES);
         }else{
