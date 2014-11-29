@@ -59,14 +59,14 @@ typedef struct _packet {
 
 typedef packet_t message_value_type; //Set the port to handle an array of packets
 #define message_size        1   // Each message is a single packet
-#define PORT_DEPTH          5  // make N=TABLE_ENTRIES*PKTS_PER_ROW*3=10*4*3
+#define PORT_DEPTH          10  // make N=TABLE_ENTRIES*PKTS_PER_ROW*3=10*4*3
 // Declare a set (array of ports). The ports are numbered 0 to NUM_PORTS-1.
-#define NUM_PORTS           4 // only 3 clients and 1 server here, 100 is overkill
+#define NUM_PORTS           10 // only 3 clients and 1 server here, 100 is overkill
 #define NUM_SERVERS 1
 #define NUM_CLIENTS 2  // should not exceed NUM_PORTS - NUM_SERVERS
-#define TABLE_ENTRIES 5 // number of rows in the string table
+#define TABLE_ENTRIES 10 // number of rows in the string table
 const size_t MAX_STRING_SIZE = 4096;
-#define THREAD_DELAY 100000
+#define THREAD_DELAY 100000 
 #include "msgs.h"
 #include <assert.h>
 #include <unistd.h>
@@ -152,7 +152,9 @@ packet_t* make_packet(
 }
 
 void sem_wait(int client, semaphore_t* sem){
+#if DEBUG_PRINT_ENABLED
     const char semOp [] = "P()";
+#endif    
     dbprint("\tClient #%d %s wants lock, oldCount=%d, newCount=%d\n", 
         client, semOp, sem->count, sem->count-1);
     P(sem);
@@ -161,7 +163,9 @@ void sem_wait(int client, semaphore_t* sem){
 }
 
 void sem_signal(int client, semaphore_t* sem){
+#if DEBUG_PRINT_ENABLED
     const char semOp [] = "V()";
+#endif    
     dbprint("\tClient #%d %s releasing lock, oldCount=%d, newCount=%d\n", 
         client, semOp, sem->count, sem->count+1);
     V(sem);
@@ -182,7 +186,7 @@ const char anchor_man_01[]=
 "ally? What was h"
 "er name?        "
 "Brian Fantana: I"
-"don't remember. "
+" don't remember."
 "Ron Burgundy: Th"
 "at's not a good "
 "start, but keep "
@@ -255,7 +259,6 @@ void server(void)
     int j;
     const size_t myTID = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
-    int counter = 0;
     chunk_t serverTable[TABLE_ENTRIES];
     
     printf("Starting server[TID=%lu], listening on port %u !\n", myTID, myPort);
@@ -276,7 +279,6 @@ void server(void)
 
     while(1)
     {
-        
         // slow down the servers so their progress may be observed
         usleep(THREAD_DELAY);
         vbprint("Server waiting on command packet\n");
@@ -300,18 +302,13 @@ void server(void)
                         serverTable[tableIdx].start + start_position,
                         recvd.payload[0].payload.payload,
                         recvd.payload[0].payload.len);
-#if DEBUG_PRINT_ENABLED
-                ////TODO This needs to be moved to the read client
-                //if(counter > 100000)
+#if VERBOSE_PRINT_ENABLED
                 if( recvd.payload[0].header.morePkts == false)
                 {
                     printf("Server ");
-                    counter = 0;
                     print_table(serverTable, TABLE_ENTRIES);
                 }
 #endif
-                counter++;
-                ////End TODO
                 break;
             case Delete:
                 printf("Server received Delete request {c:%u, row:%lu}\n", 
@@ -344,11 +341,11 @@ void server(void)
                             msg.payload[0].header.idx = j;
                             msg.payload[0].header.morePkts = true;
                             msg.payload[0].header.total_num_packets = 1;
-                            // should memsed the payload here too
+                            // TODO should memset the payload here too
                             Send(&ports[dest], msg);
                             totalPktsSent++;
                         }
-                        // TODO need to create a header for return message
+                        // create a header for return message
                         for(i = 0; i < n; ++i)
                         {
                             dbprint("\tServer sending table[%d], pkt %lu/%lu \n",
@@ -414,23 +411,23 @@ void write_client(void)
         packet_t* packets;
         if(command == 0)// TODO: these cases should be two different client functions
         {
-        // set the message to a string from the library
+            // set the message to a string from the library
             memcpy(msg, anchor_man_01+(PAYLOAD_SIZE*current_msg), WRITE_SIZE);
             packets = make_packet(msg, WRITE_SIZE, myPort, serverPort, &n);
         }
         else
         {
-        // set the message to empty to delete the string
+            // set the message to empty to delete the string
             // TODO: client should only send a single message if the command is delete
             memset(msg, 0, PAYLOAD_SIZE);
             packets = make_packet("", PAYLOAD_SIZE, myPort, serverPort, &n);
         }
 
-        // TODO tableIdx selection needs to be random, per spec?? 
+        // tableIdx selection needs to be random, per spec 
         // "Client 1 and client 2, add/delete or modify the strings, at random."
         // random behavior will cause race conditions so need locks on the table rows
         tableIdx = current_msg % TABLE_ENTRIES;
-        // lock able access here so only one client may modify the table at a time
+        // lock table access here so only one client may modify the table at a time
         sem_wait(clientID, &tableMutex);
         printf("Client #%d sending, row %d: <%s>\n",
                 clientID, tableIdx,msg);
@@ -449,18 +446,15 @@ void write_client(void)
             // TODO client should receive an ack from the server
         }
         free(packets);
-        // unlock the table so that the otner client may access it
+        // unlock the table so that the other clients may access it
         sem_signal(clientID, &tableMutex);
 
-        // cycle through commands of adding a string or deleting a string 
-        // TODO = this needs to be random, per spec: 
+        // this needs to be random, per spec: 
         // "Client 1 and client 2, add/delete or modify the strings, at random."
-        if(randint(9) < 0)  // // never delete // only delete 33% of the time
+        if(randint(9) < 3)  // // only delete 33% of the time
             command = 1; // Delete;
         else
             command = 0; // Add
-        //command = (command + 1) % 2;
-
     }
 }
 
@@ -479,8 +473,10 @@ void read_client(void)
     // payload contents: {myTID, myPort, myInteger,...}
     payload[0] = myTID;
     int i = 0;
-    int stringLen = 0;
-    int yieldCount = 1;
+    const int turns = 1000;
+    const int yieldFreq = 960; 
+    int yieldRoll = 0;
+    int yieldCount = 0;
     chunk_t clientTable[TABLE_ENTRIES];
 
      // initialize string table
@@ -496,9 +492,9 @@ void read_client(void)
     
     while(1)
     {
-        yieldCount++;
-//        if(yieldCount % 20 == 0){// only print if the yield count is at a magic number
-        if(1){ // always print the table if it's his turn
+        yieldRoll = randint(turns); 
+        vbprint("Yield roll = %d\n", yieldRoll);
+        if(yieldRoll > yieldFreq){// 
             // slow down the clients so their progress may be observed
             usleep(THREAD_DELAY);
             message_t msg;
@@ -558,7 +554,8 @@ void read_client(void)
             print_table(clientTable, TABLE_ENTRIES);
         }else{
             // always yield unless the "magic number" has been hit
-            // dbprint("Client #%d, yieldng (count = %d)\n", clientID, yieldCount);
+            dbprint("Client #%d, yieldng (count = %d)\n", clientID, yieldCount);
+            yieldCount ++;
             yield();
         }
     }
@@ -687,7 +684,8 @@ int main(int argc, const char *argv[])
     printf("\tAdd(i,msg): add a string to the table at a specific index, overwriting the contents of that row\n");
     printf("\tDelete(i):  remove the contents of the table at a specific index\n");
     printf("\tRead:       read out the entire contents of the table\n");
-    printf("\tRead(i):    TODO: read out the contents of a specified row of the table\n\n");
+    // TODO implement per-row reads: 
+    // printf("\tRead(i):    TODO: read out the contents of a specified row of the table\n\n");
     printf("Spawning %d servers listening on ports 0 to %d\n", NUM_SERVERS, NUM_SERVERS-1);
     printf("Spawning %d clients with receive ports %d to %d\n\n", NUM_CLIENTS, NUM_SERVERS, NUM_SERVERS+NUM_CLIENTS-1);
     printf("Press 'Enter' to continue:\n");
