@@ -16,6 +16,21 @@
 //  Message Transport (Packets)      // 
 ///////////////////////////////////////
 
+#ifdef DEBUG
+    #define DEBUG_PRINT_ENABLED 1  // uncomment to enable DEBUG statements
+#endif
+#define VERBOSE_PRINT_ENABLED 0
+#if DEBUG_PRINT_ENABLED
+    #define dbprint printf
+#else
+    #define dbprint(format, args...) ((void)0)
+#endif
+#if VERBOSE_PRINT_ENABLED
+    #define vbprint printf
+#else
+    #define vbprint(format, args...) ((void)0)
+#endif
+
 typedef unsigned int port_id_t;
 
 typedef enum _command_t { Add, Delete, Read} command_t;
@@ -26,7 +41,8 @@ typedef struct _header_t {
     size_t sequence_number;
     size_t total_num_packets;
     command_t command;
-    size_t idx;
+    size_t idx; // table row index
+    bool morePkts;
 } header_t;
 
 #define PAYLOAD_SIZE 16
@@ -43,12 +59,12 @@ typedef struct _packet {
 
 typedef packet_t message_value_type; //Set the port to handle an array of packets
 #define message_size        1   // Each message is a single packet
-#define PORT_DEPTH          20  // make N=10 (num  msgs in buffer)
-// Declare a set (array of ports). The ports are numbered 0 to 99.
-#define NUM_PORTS           100 //Final requirement is 100
+#define PORT_DEPTH          5  // make N=TABLE_ENTRIES*PKTS_PER_ROW*3=10*4*3
+// Declare a set (array of ports). The ports are numbered 0 to NUM_PORTS-1.
+#define NUM_PORTS           4 // only 3 clients and 1 server here, 100 is overkill
 #define NUM_SERVERS 1
 #define NUM_CLIENTS 2  // should not exceed NUM_PORTS - NUM_SERVERS
-#define TABLE_ENTRIES 10 // number of rows in the string table
+#define TABLE_ENTRIES 5 // number of rows in the string table
 const size_t MAX_STRING_SIZE = 4096;
 #define THREAD_DELAY 100000
 #include "msgs.h"
@@ -91,7 +107,24 @@ chunk_t* make_chunks(
     return chunks;
 }
 
-
+packet_t* makeEOFPkt(
+        size_t source_port,
+        size_t dest_port)
+{
+    // this function makes an empty packet that onl;y has the morePkts (EOF) bit unset
+    size_t number_of_packets = 1;
+    packet_t* packets = (packet_t*)malloc(sizeof(packet_t) * number_of_packets);
+    packets[0].header.sequence_number = 0;
+    packets[0].header.total_num_packets = number_of_packets;
+    packets[0].header.source_port = source_port;
+    packets[0].header.dest_port = dest_port;
+    packets[0].header.morePkts = false; // false, no more packets
+    packets[0].header.idx=100; // secondary signal
+    packets[0].payload.len = 0; // no payload
+    // should probably initialize the payload, but want it to be zero-length
+    // memcpy(packets[i].payload.payload, c[i].start, c[i].len);
+    return packets;
+}
 
 packet_t* make_packet(
         char* msg, 
@@ -102,7 +135,7 @@ packet_t* make_packet(
 {
     size_t i = 0;
     chunk_t* c = make_chunks(msg, len, number_of_packets);
-    packet_t* packets = (packet_t*)malloc(sizeof(packet_t)**number_of_packets);
+    packet_t* packets = (packet_t*)malloc(sizeof(packet_t) * *number_of_packets);
     
     for(i = 0; i < *number_of_packets; ++i)
     {
@@ -110,7 +143,7 @@ packet_t* make_packet(
         packets[i].header.total_num_packets = *number_of_packets;
         packets[i].header.source_port = source_port;
         packets[i].header.dest_port = dest_port;
-
+        packets[i].header.morePkts = true;
         packets[i].payload.len = c[i].len;
         memcpy(packets[i].payload.payload, c[i].start, c[i].len);
     }
@@ -120,19 +153,19 @@ packet_t* make_packet(
 
 void sem_wait(int client, semaphore_t* sem){
     const char semOp [] = "P()";
-    printf("\tClient #%d %s enter, oldCount=%d, newCount=%d\n", 
+    dbprint("\tClient #%d %s wants lock, oldCount=%d, newCount=%d\n", 
         client, semOp, sem->count, sem->count-1);
     P(sem);
-    printf("\tClient #%d %s exit, count=%d\n", 
+    dbprint("\tClient #%d %s has lock, count=%d\n", 
         client, semOp, sem->count);
 }
 
 void sem_signal(int client, semaphore_t* sem){
     const char semOp [] = "V()";
-    printf("\tClient #%d %s enter, oldCount=%d, newCount=%d\n", 
+    dbprint("\tClient #%d %s releasing lock, oldCount=%d, newCount=%d\n", 
         client, semOp, sem->count, sem->count+1);
     V(sem);
-    printf("\tClient #%d %s exit, count=%d\n", 
+    dbprint("\tClient #%d %s exit lock, count=%d\n", 
         client, semOp, sem->count);
 }
 
@@ -175,7 +208,7 @@ const char anchor_man_01[]=
 int randint(int max) {
     int randomNumber = (int)rand();
     int retVal = randomNumber % max;
-//    printf("randomNumber = %d, retVal = %d\n", randomNumber, retVal);
+//    dbprint("randomNumber = %d, retVal = %d\n", randomNumber, retVal);
     return retVal;
 } 
 
@@ -211,7 +244,7 @@ void print_table(chunk_t* table, size_t len)
     printf("Printing String Table:\n");
     for(i = 0; i < len; ++i)
     {
-        printf("\t[%d] Length: %lu - %s\n", i, table[i].len, table[i].start);
+        printf("\t[%d] Length: %lu\t- <%s>\n", i, table[i].len, table[i].start);
     }
 }
 
@@ -246,16 +279,18 @@ void server(void)
         
         // slow down the servers so their progress may be observed
         usleep(THREAD_DELAY);
-        printf("Server waiting on command packet\n");
+        vbprint("Server waiting on command packet\n");
         message_t recvd = Receive(&ports[myPort]);
         header_t head = recvd.payload[0].header;
         command_t clientCommand = head.command;
-        printf("Server received packet with command <%u>\n", clientCommand);
+        //printf("Server received packet with command <%u>\n", clientCommand);
         switch(clientCommand)
         {
            case Add:
-                printf("Server received Add request {c:%u, row:%lu}\n", 
-                    head.source_port-1, head.idx);
+                if(recvd.payload[0].header.sequence_number == 0) {
+                    printf("Server received Add request {c:%u, row:%lu}\n", 
+                        head.source_port-1, head.idx);
+                }
                 tableIdx = recvd.payload[0].header.idx % TABLE_ENTRIES;  // TODO should thie be TABLE_ENTRIES OR PORT_DEPTH??
                 stringLen = recvd.payload[0].header.total_num_packets*PAYLOAD_SIZE;
 
@@ -265,13 +300,16 @@ void server(void)
                         serverTable[tableIdx].start + start_position,
                         recvd.payload[0].payload.payload,
                         recvd.payload[0].payload.len);
+#if DEBUG_PRINT_ENABLED
                 ////TODO This needs to be moved to the read client
-                if(counter > 100000)
+                //if(counter > 100000)
+                if( recvd.payload[0].header.morePkts == false)
                 {
-                    printf("Server printing his received table\n");
+                    printf("Server ");
                     counter = 0;
                     print_table(serverTable, TABLE_ENTRIES);
                 }
+#endif
                 counter++;
                 ////End TODO
                 break;
@@ -289,40 +327,58 @@ void server(void)
                     int totalPktsSent=0;
                     for(j = 0; j < TABLE_ENTRIES; ++j)
                     {
-                        printf("Server sending table[%d]\n", j);
                         packet_t* packets = make_packet(
                                 serverTable[j].start,
                                 serverTable[j].len,
                                 myPort,
                                 dest,
                                 &n);
-                        if(n == 0)
-                        {
+                        dbprint("Server sending table[%d](%lu)\n", j, n);
+                        if(n == 0) // no need to send more than one packet
+                        {// account for empty table rows
                             message_t msg;
                             msg.payload_size = 1;
                             msg.payload[0].payload.len = 0;
+                            msg.payload[0].header.command = Read;
+                            msg.payload[0].header.sequence_number = 0;
+                            msg.payload[0].header.idx = j;
+                            msg.payload[0].header.morePkts = true;
+                            msg.payload[0].header.total_num_packets = 1;
+                            // should memsed the payload here too
                             Send(&ports[dest], msg);
                             totalPktsSent++;
                         }
                         // TODO need to create a header for return message
                         for(i = 0; i < n; ++i)
                         {
-                            printf("\tServer sending table[%d], pkt %lu/%lu \n",
+                            dbprint("\tServer sending table[%d], pkt %lu/%lu \n",
                                 j, i+1, n);
                             message_t msg;
                             msg.payload_size = 1;
                             memcpy(msg.payload, &packets[i], sizeof(message_value_type));
                             msg.payload[0].header.idx = j;
+                            msg.payload[0].header.command = Read;
                             //fprintf(stderr, "Sending to: %d\n", dest);
                             Send(&ports[dest], msg);
                             totalPktsSent++;
                         }
                         free(packets);
                     }
-                    printf("Server completed <%u> request, total=%d\n", 
+                    // Server should send an "end of flow" packet here with header.morePkts=0
+                    dbprint("Server done sending data, send EOF\n");
+                    packet_t *lastPacket = makeEOFPkt(myPort, dest);
+                    message_t msg;
+                    msg.payload_size = 1;
+                    memcpy(msg.payload, &lastPacket[0], sizeof(message_value_type));
+                    msg.payload[0].header.idx = 100;
+                    msg.payload[0].header.morePkts = false;
+                    msg.payload[0].header.command = Read;
+                    Send(&ports[dest], msg);
+                    free(lastPacket);
+                    dbprint("Server completed <%u> request, total=%d\n", 
                             clientCommand, totalPktsSent);
-                    printf("Server printing his received table\n");
-                    print_table(serverTable, TABLE_ENTRIES);
+                   // dbprint("Server printing his received table\n");
+                   // print_table(serverTable, TABLE_ENTRIES);
                 }
                 break;
         }
@@ -344,7 +400,7 @@ void write_client(void)
     int i;
     int tableIdx = 0;
     //printf("Start client[%lu], with receive port %u !\n", myTID, myPort);
-    printf("Starting client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
+    printf("Starting Client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
     while(1)
     {
         // slow down writers
@@ -375,19 +431,22 @@ void write_client(void)
         // random behavior will cause race conditions so need locks on the table rows
         tableIdx = current_msg % TABLE_ENTRIES;
         // lock able access here so only one client may modify the table at a time
-        sem_wait(clientID, &tableMutex); 
-        printf("Client #%d sending to server, row %d, in %lu messages string <%s> ...\n",
-                clientID, tableIdx, n, msg);
+        sem_wait(clientID, &tableMutex);
+        printf("Client #%d sending, row %d: <%s>\n",
+                clientID, tableIdx,msg);
         for(i = 0; i < n; ++i)
         {
             message_t msg;
             msg.payload_size = 1;
             packets[i].header.command = command;
             packets[i].header.idx = tableIdx;
+            if(i+1==n)
+                packets[i].header.morePkts = false;
             memcpy(msg.payload, &packets[i], sizeof(message_value_type));
-            printf("client #%d sending message %d of %lu...\n",
+            dbprint("Client #%d sending message %d of %lu...\n",
                 clientID, i+1, n);
             Send(&ports[serverPort], msg);
+            // TODO client should receive an ack from the server
         }
         free(packets);
         // unlock the table so that the otner client may access it
@@ -396,7 +455,11 @@ void write_client(void)
         // cycle through commands of adding a string or deleting a string 
         // TODO = this needs to be random, per spec: 
         // "Client 1 and client 2, add/delete or modify the strings, at random."
-        command = (command + 1) % 2;
+        if(randint(9) < 0)  // // never delete // only delete 33% of the time
+            command = 1; // Delete;
+        else
+            command = 0; // Add
+        //command = (command + 1) % 2;
 
     }
 }
@@ -419,7 +482,6 @@ void read_client(void)
     int stringLen = 0;
     int yieldCount = 1;
     chunk_t clientTable[TABLE_ENTRIES];
-    int sendRequest = 1;
 
      // initialize string table
     for(i = 0; i < TABLE_ENTRIES; ++i)
@@ -430,13 +492,13 @@ void read_client(void)
     }
     
     yield();
-    printf("Starting client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
+    printf("Starting Client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
     
     while(1)
     {
         yieldCount++;
-        if(yieldCount % 19 == 0){
-            // only print if the yield count is at a magic number
+//        if(yieldCount % 20 == 0){// only print if the yield count is at a magic number
+        if(1){ // always print the table if it's his turn
             // slow down the clients so their progress may be observed
             usleep(THREAD_DELAY);
             message_t msg;
@@ -447,75 +509,56 @@ void read_client(void)
             packet.header.dest_port = serverPort;
 
             memcpy(msg.payload, &packet, sizeof(message_value_type));
-            //////// Matt... The dead lock is happing with an interaction between
-            //the server sending lots of packets and us trying to receieve them.  
-            // TODO: lock table so that no other clients may write while this one is reading
-            if(sendRequest){
-                printf("Client #%d locking table\n", clientID);
-                sem_wait(clientID, &tableMutex); 
-                printf("Client #%d sending Read request to server...\n", clientID);
-                Send(&ports[serverPort], msg);
-            }
-            printf("Client #%d waiting on receive from server...\n", clientID);
+            // lock table so that no other clients may write while this one is reading
+            sem_wait(clientID, &tableMutex); 
+            Send(&ports[serverPort], msg);
+            printf("Client #%d sent Read request to server...\n", clientID);
+            vbprint("Client #%d waiting on receive from server...\n", clientID);
             // Receive the first message for the first row of the table
             // the below algorithm assumes that all of the packets are sent and 
             // received in order.  This is flawed as we know that the queue (network)
             // does not always deliver them in order
             int tableRow = 0;
             int totalPktsRcv=0;
-            do{
-                printf("Client #%d waiting on receive:  table[%d]. first packet\n", 
+            do{  // this outer do-while represents the table rows
+                vbprint("Client #%d waiting on receive:  table[%d]. first packet\n", 
                         clientID, tableRow);
-                // somehow the client is waiting on the receive and the server is waiting on one too
-                msg = Receive(&ports[myPort]);
-                totalPktsRcv++;
-                header_t firstHeader = msg.payload[0].header;
-                int packetsThisRow = firstHeader.total_num_packets;
-                tableRow = firstHeader.idx % TABLE_ENTRIES;// TODO modulo??
-                stringLen = firstHeader.total_num_packets * PAYLOAD_SIZE;
-                clientTable[tableRow].len = stringLen;
-                int seqNum = firstHeader.sequence_number;
-                printf("Client #%d received table[%d], pkt %d/%d, tot=%d/%d\n", 
-                        clientID, tableRow, seqNum, packetsThisRow, totalPktsRcv,
-                        TABLE_ENTRIES*packetsThisRow);
-                size_t start_position = seqNum*PAYLOAD_SIZE;
-                memcpy(
-                        clientTable[tableRow].start + start_position,
-                        msg.payload[0].payload.payload,
-                        msg.payload[0].payload.len);
-                while(seqNum+1 < packetsThisRow){
-                    // continue receiving packets for this row
-                    printf("Client #%d waiting on receive:  table[%d], pkt %d/%d\n", 
-                        clientID, tableRow, seqNum+1, packetsThisRow);
-                    
+                int pktRcvThisRow = 0;
+                int seqNum = 0;
+                size_t start_position = 0;
+                int packetsThisRow = 0;
+                do{// this inner do-while represents the multiple packets of a single row
+                    // CAUTION: this assumes that packets of a given row will arrive in order
                     msg = Receive(&ports[myPort]);
+                    pktRcvThisRow++;
                     totalPktsRcv++;
-                    seqNum = msg.payload[0].header.sequence_number;
-                    printf("Client #%d received table[%d], pkt %d/%d, tot=%d/%d\n", 
-                            clientID, tableRow, seqNum, packetsThisRow, totalPktsRcv,
-                            TABLE_ENTRIES*packetsThisRow);
-                    start_position = seqNum * PAYLOAD_SIZE;     
-                    memcpy(
-                            clientTable[tableRow].start + start_position,
-                            msg.payload[0].payload.payload,
-                            msg.payload[0].payload.len);
-                    printf("Client #%d copied data: table[%d], pkt %d/%d\n", 
-                            clientID, tableRow, seqNum+1, packetsThisRow);
-                }
-                printf("Client #%d printing his received table\n", clientID);
-                print_table(clientTable, TABLE_ENTRIES);
-            }while(tableRow < TABLE_ENTRIES);
-             
-            // TODO: unlock entire table so that other clients may write
-            if(sendRequest == 1){
-                printf("Client #%d unlocking table\n", clientID);
-                sem_signal(clientID, &tableMutex); 
-            }
-            printf("Client #%d printing his received table\n", clientID);
+                    header_t header = msg.payload[0].header;
+                    tableRow = header.idx;
+                    packetsThisRow = header.total_num_packets;
+                    seqNum = header.sequence_number; 
+                    start_position = seqNum * PAYLOAD_SIZE;
+                    if(tableRow < TABLE_ENTRIES){
+                        clientTable[tableRow].len = header.total_num_packets * PAYLOAD_SIZE;      
+                        dbprint("Client #%d received table[%d], pkt %d/%d, tot=%d\n", 
+                                clientID, tableRow, pktRcvThisRow, packetsThisRow, totalPktsRcv);
+                        memcpy(
+                                clientTable[tableRow].start + start_position,
+                                msg.payload[0].payload.payload,
+                                msg.payload[0].payload.len);
+                        vbprint("Client #%d copied data: table[%d], pkt %d/%d\n", 
+                                clientID, tableRow, pktRcvThisRow, packetsThisRow);
+                    }else{
+                        dbprint("Client #%d received end-of-flow packet", clientID);
+                    }
+                }while(pktRcvThisRow < packetsThisRow);
+            }while(msg.payload[0].header.morePkts == true );
+            // unlock table so that other clients may write
+            sem_signal(clientID, &tableMutex); 
+            printf("Client #%d ", clientID);
             print_table(clientTable, TABLE_ENTRIES);
         }else{
             // always yield unless the "magic number" has been hit
-            // printf("Client #%d, yieldng (count = %d)\n", clientID, yieldCount);
+            // dbprint("Client #%d, yieldng (count = %d)\n", clientID, yieldCount);
             yield();
         }
     }
@@ -578,11 +621,11 @@ int test_packets01()
         "ally? What was h"
         "er name?        "
         "Brian Fantana: I"
-        "don't remember. "
-        "Ron Burgundy: Th"
-        "at's not a good "
-        "start, but keep "
-        "going.          "
+        " don't remember."
+        " Ron Burgundy: T"
+        "hat's not a good"
+        " start, but keep"
+        " going.         "
         "Brian Fantana: S"
         "he was Brazilian"
         ", or Chinese, or"
@@ -656,6 +699,7 @@ int main(int argc, const char *argv[])
         PortInit(&ports[i], PORT_DEPTH);
     
     // declare a table mutex to prevent race conditions for the clients
+    // initialize mutex to 1 so 1 client may enter the CS
     tableMutex = CreateSem(1);   
 
 

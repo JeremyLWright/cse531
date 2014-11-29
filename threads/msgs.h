@@ -69,6 +69,7 @@ void Send(Port_t* port, const message_t msg)
     {
 #ifdef DEBUG
         printf("\tProducer Sem: %d\n", port->producer_sem.count);
+        printf("\tConsumer Sem: %d\n", port->consumer_sem.count);
 #endif    
         // sem wait on the port's producer semaphore.  Block if port is full
         P(&port->producer_sem);
