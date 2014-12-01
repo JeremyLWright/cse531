@@ -685,7 +685,7 @@ int main(int argc, const char *argv[])
 
     printf("\nBegin client-server string storage test program\n");
     printf("Currently implemented multi-packet strings and working on client read\n");
-    printf("Server stores a table of strings (%d) and supports the followign operations: \n", TABLE_ENTRIES);
+    printf("Server stores a table of strings (%d) and supports the following operations: \n", TABLE_ENTRIES);
     printf("\tAdd(i,msg): add a string to the table at a specific index, overwriting the contents of that row\n");
     printf("\tDelete(i):  remove the contents of the table at a specific index\n");
     printf("\tRead:       read out the entire contents of the table\n");
