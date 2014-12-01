@@ -33,7 +33,7 @@
 
 typedef unsigned int port_id_t;
 
-typedef enum _command_t { Add, Delete, Read} command_t;
+typedef enum _command_t { Add, Delete, Read, AddACK, DeleteACK, ReadACK} command_t;
 
 typedef struct _header_t {
     port_id_t source_port;
@@ -260,6 +260,7 @@ void server(void)
     const size_t myTID = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
     chunk_t serverTable[TABLE_ENTRIES];
+    message_t [] pendingRequestBuffer;
     
     printf("Starting server[TID=%lu], listening on port %u !\n", myTID, myPort);
 
@@ -277,6 +278,7 @@ void server(void)
     size_t stringLen = 0;
 
 
+
     while(1)
     {
         // slow down the servers so their progress may be observed
@@ -285,6 +287,11 @@ void server(void)
         message_t recvd = Receive(&ports[myPort]);
         header_t head = recvd.payload[0].header;
         command_t clientCommand = head.command;
+
+        // TODO determine if this new message is part of the current request operation
+
+        // TODO if not, put it in the message buffer
+
         //printf("Server received packet with command <%u>\n", clientCommand);
         switch(clientCommand)
         {
@@ -308,6 +315,7 @@ void server(void)
                     printf("Server ");
                     print_table(serverTable, TABLE_ENTRIES);
                 }
+                // TODO send ACK to the client that sent this message
 #endif
                 break;
             case Delete:
@@ -315,6 +323,7 @@ void server(void)
                     head.source_port-1, head.idx);
                 tableIdx = recvd.payload[0].header.idx % TABLE_ENTRIES;
                 serverTable[tableIdx].len = 0;
+                // TODO send ACK to the client that sent this message
                 break;
 
             case Read:
@@ -322,6 +331,7 @@ void server(void)
                     int dest = recvd.payload[0].header.source_port;
                     printf("Server received read request, sourcePort=%d\n", dest);
                     int totalPktsSent=0;
+                    // TODO send ACK to the client that sent this message
                     for(j = 0; j < TABLE_ENTRIES; ++j)
                     {
                         packet_t* packets = make_packet(
@@ -345,6 +355,7 @@ void server(void)
                             Send(&ports[dest], msg);
                             totalPktsSent++;
                         }
+                        // TODO server should wait for ACK from client
                         // create a header for return message
                         for(i = 0; i < n; ++i)
                         {
@@ -358,6 +369,7 @@ void server(void)
                             //fprintf(stderr, "Sending to: %d\n", dest);
                             Send(&ports[dest], msg);
                             totalPktsSent++;
+                            // TODO server should wait for ACK from client
                         }
                         free(packets);
                     }
@@ -444,9 +456,11 @@ void write_client(void)
                 clientID, i+1, n);
             Send(&ports[serverPort], msg);
             // TODO client should receive an ack from the server
+            // and block until he does
+            // message_t reqACK = Receive(&ports[myPort]);
         }
         free(packets);
-        // unlock the table so that the other clients may access it
+        // unlock the table so that the other clients may access it TODO remove the lock
         sem_signal(clientID, &tableMutex);
 
         // this needs to be random, per spec: 
@@ -533,6 +547,7 @@ void read_client(void)
                     packetsThisRow = header.total_num_packets;
                     seqNum = header.sequence_number; 
                     start_position = seqNum * PAYLOAD_SIZE;
+                    // TODO client should ACK the server's send
                     if(tableRow < TABLE_ENTRIES){
                         clientTable[tableRow].len = header.total_num_packets * PAYLOAD_SIZE;      
                         dbprint("Client #%d received table[%d], pkt %d/%d, tot=%d\n", 
