@@ -178,36 +178,40 @@ void sem_signal(int client, semaphore_t* sem){
 // Client Server      //
 ////////////////////////
 
-const char anchor_man_01[]=
-"Brian Fantana: I"
-" think I was in "
-"love once.      "
-"Ron Burgundy: Re"
-"ally? What was h"
-"er name?        "
-"Brian Fantana: I"
-" don't remember."
-"Ron Burgundy: Th"
-"at's not a good "
-"start, but keep "
-"going.          "
-"Brian Fantana: S"
-"he was Brazilian"
-", or Chinese, or"
-" something weird"
-". I met her in t"
-"he bathroom of a"
-" K-Mart and we m"
-"ade love for hou"
-"rs. Then we part"
-"ed ways, never t"
-"o see each other"
-" again.         "
-"Ron Burgundy: I'"
-"m pretty sure th"
-"at's not love.  "
-"Brian Fantana: D"
-"amn it!         ";
+const char st_crispin_day[]="\
+That he which hath no stomach to this fight,\
+Let him depart; his passport shall be made,\
+And crowns for convoy put into his purse;\
+We would not die in that man's company\
+That fears his fellowship to die with us.\
+This day is call'd the feast of Crispian.\
+He that outlives this day, and comes safe home,\
+Will stand a tip-toe when this day is nam’d,\
+And rouse him at the name of Crispian.\
+He that shall live this day, and see old age,\
+Will yearly on the vigil feast his neighbours,\
+And say 'To-morrow is Saint Crispian.'\
+Then will he strip his sleeve and show his scars,\
+And say 'These wounds I had on Crispian’s day.'\
+Old men forget; yet all shall be forgot,\
+But he’ll remember, with advantages,\
+What feats he did that day. Then shall our names,\
+Familiar in his mouth as household words-\
+Harry the King, Bedford and Exeter,\
+Warwick and Talbot, Salisbury and Gloucester-\
+Be in their flowing cups freshly rememb’red.\
+This story shall the good man teach his son;\
+And Crispin Crispian shall ne'er go by,\
+From this day to the ending of the world,\
+But we in it shall be remembered-\
+We few, we happy few, we band of brothers;\
+For he to-day that sheds his blood with me\
+Shall be my brother; be he ne'er so vile,\
+This day shall gentle his condition;\
+And gentlemen in England now-a-bed\
+Shall think themselves accurs'd they were not here,\
+And hold their manhoods cheap whiles any speaks\
+That fought with us upon Saint Crispin's day.";\
 
 int randint(int max) {
     int randomNumber = (int)rand();
@@ -402,14 +406,15 @@ void write_client(void)
     const port_id_t serverPort = chooseServer();
     const int clientID = getClientID();
     uint8_t command = 0;
-    const size_t total_msgs = sizeof(anchor_man_01)/PAYLOAD_SIZE;
+    const size_t total_msgs = sizeof(st_crispin_day)/PAYLOAD_SIZE;
     size_t current_msg = 0;
     size_t const WRITE_SIZE = PAYLOAD_SIZE*4;
-    char msg[WRITE_SIZE];
+    char msg[WRITE_SIZE+1];
     int i;
     int tableIdx = 0;
     //printf("Start client[%lu], with receive port %u !\n", myTID, myPort);
     printf("Starting Client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
+    memset(msg, 0, sizeof(msg));
     while(1)
     {
         // slow down writers
@@ -424,7 +429,7 @@ void write_client(void)
         if(command == 0)// TODO: these cases should be two different client functions
         {
             // set the message to a string from the library
-            memcpy(msg, anchor_man_01+(PAYLOAD_SIZE*current_msg), WRITE_SIZE);
+            memcpy(msg, st_crispin_day+(PAYLOAD_SIZE*current_msg), WRITE_SIZE);
             packets = make_packet(msg, WRITE_SIZE, myPort, serverPort, &n);
         }
         else
@@ -695,7 +700,7 @@ int main(int argc, const char *argv[])
 
     printf("\nBegin client-server string storage test program\n");
     printf("Currently implemented multi-packet strings and working on client read\n");
-    printf("Server stores a table of strings (%d) and supports the followign operations: \n", TABLE_ENTRIES);
+    printf("Server stores a table of strings (%d) and supports the following operations: \n", TABLE_ENTRIES);
     printf("\tAdd(i,msg): add a string to the table at a specific index, overwriting the contents of that row\n");
     printf("\tDelete(i):  remove the contents of the table at a specific index\n");
     printf("\tRead:       read out the entire contents of the table\n");
