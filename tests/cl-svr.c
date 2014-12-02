@@ -39,7 +39,16 @@
 
 typedef unsigned int port_id_t;
 
-typedef enum _command_t { Add, Delete, Read, AddACK, DeleteACK, ReadACK} command_t;
+typedef enum _command_t 
+{ 
+    Add, 
+    Delete, 
+    Read, 
+    AddACK, 
+    DeleteACK, 
+    ReadACK,
+    SwitchPort
+} command_t;
 
 typedef struct _header_t {
     port_id_t source_port;
@@ -67,7 +76,8 @@ typedef packet_t message_value_type; //Set the port to handle an array of packet
 #define message_size        1   // Each message is a single packet
 #define PORT_DEPTH          10  // make N=TABLE_ENTRIES*PKTS_PER_ROW*3=10*4*3
 // Declare a set (array of ports). The ports are numbered 0 to NUM_PORTS-1.
-#define NUM_PORTS           10 // only 3 clients and 1 server here, 100 is overkill
+#define NUM_PORTS           25 // only 3 clients and 1 server here, 100 is overkill
+#define INVALID_PORT_NUMBER (NUM_PORTS+1)
 #define NUM_SERVERS 1
 #define NUM_CLIENTS 2  // should not exceed NUM_PORTS - NUM_SERVERS
 #define TABLE_ENTRIES 10 // number of rows in the string table
@@ -264,6 +274,11 @@ void print_table(chunk_t* table, size_t len)
     }
 }
 
+bool in_exclusive_mode(current_session_port)
+{
+    return current_session_port != INVALID_PORT_NUMBER;
+}
+
 
 void server(void)
 {// server should listen on his own port only
@@ -271,6 +286,9 @@ void server(void)
     int j;
     const size_t myTID = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
+    port_id_t current_session_port = INVALID_PORT_NUMBER;
+
+
     chunk_t serverTable[TABLE_ENTRIES];
     message_t pendingRequestBuffer[2];
     
@@ -296,7 +314,13 @@ void server(void)
         // slow down the servers so their progress may be observed
         usleep(THREAD_DELAY);
         vbprint("Server waiting on command packet\n");
-        message_t recvd = Receive(&ports[myPort]);
+        message_t recvd;
+
+        if(in_exclusive_mode(current_session_port))
+            recvd = Receive(&ports[current_session_port]);
+        else
+            recvd = Receive(&ports[myPort]);
+        
         header_t head = recvd.payload[0].header;
         command_t clientCommand = head.command;
 
@@ -338,6 +362,12 @@ void server(void)
                 // TODO send ACK to the client that sent this message
                 break;
 
+            case SwitchPort:
+                printf("Client requested session port: %d\n", recvd.payload[0].header.idx);
+                current_session_port = recvd.payload[0].header.idx;
+                exit(EXIT_FAILURE);
+                 
+                break;
             case Read:
                 {
                     int dest = recvd.payload[0].header.source_port;
@@ -406,6 +436,18 @@ void server(void)
     }
 }
 
+message_t make_exclusive_mode(int session_port, int client_id)
+{
+        //Switch ports to go to exclusive mode
+        message_t msg;
+        msg.payload_size = 1;
+        msg.payload[0].header.command = SwitchPort;
+        msg.payload[0].header.idx = session_port;
+        printf("Client #%d switching to exclusive mode on port %d\n",
+                client_id, session_port);
+        return msg;
+}
+
 
 void write_client(void)
 {
@@ -420,6 +462,7 @@ void write_client(void)
     char msg[WRITE_SIZE+1];
     int i;
     int tableIdx = 0;
+    const int my_session_port = NUM_PORTS - clientID;
     //printf("Start client[%lu], with receive port %u !\n", myTID, myPort);
     printf("Starting Client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
     memset(msg, 0, sizeof(msg));
@@ -455,7 +498,14 @@ void write_client(void)
         // lock table access here so only one client may modify the table at a time
 #if 0
         sem_wait(clientID, &tableMutex);
+#else
+        message_t ex = make_exclusive_mode(my_session_port, clientID);
+        Send(&ports[serverPort], ex);
+        Receive(&ports[my_session_port]);
+        printf("Client #%d Receiving to exclusive mode Port %d\n",
+                clientID, my_session_port);
 #endif
+
         printf("Client #%d sending, row %d: <%s>\n",
                 clientID, tableIdx,msg);
         for(i = 0; i < n; ++i)
