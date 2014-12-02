@@ -241,8 +241,9 @@ void print_table(chunk_t* table, size_t len)
     printf("Printing String Table:\n");
     for(i = 0; i < len; ++i)
     {
-        printf("\t[%d] Length: %lu\t- <%s>\n", i, table[i].len, table[i].start);
+        printf("\t[%d] \"%s\"\n", i, table[i].start);
     }
+    printf("\n");
 }
 
 
@@ -300,7 +301,6 @@ void server(void)
                     printf("Server ");
                     print_table(serverTable, TABLE_ENTRIES);
                 }
-                // TODO send ACK to the client that sent this message
 #endif
                 break;
             case Delete:
@@ -308,7 +308,6 @@ void server(void)
                     head.source_port-1, head.idx);
                 tableIdx = recvd.payload[0].header.idx % TABLE_ENTRIES;
                 serverTable[tableIdx].len = 0;
-                // TODO send ACK to the client that sent this message
                 break;
 
             case Read:
@@ -316,7 +315,6 @@ void server(void)
                     int dest = recvd.payload[0].header.source_port;
                     printf("Server received read request, sourcePort=%d\n", dest);
                     int totalPktsSent=0;
-                    // TODO send ACK to the client that sent this message
                     for(j = 0; j < TABLE_ENTRIES; ++j)
                     {
                         packet_t* packets = make_packet(
@@ -336,7 +334,6 @@ void server(void)
                             msg.payload[0].header.idx = j;
                             msg.payload[0].header.morePkts = true;
                             msg.payload[0].header.total_num_packets = 1;
-                            // TODO should memset the payload here too
                             Send(&ports[dest], msg);
                             totalPktsSent++;
                         }
@@ -353,7 +350,6 @@ void server(void)
                             //fprintf(stderr, "Sending to: %d\n", dest);
                             Send(&ports[dest], msg);
                             totalPktsSent++;
-                            // TODO server should wait for ACK from client
                         }
                         free(packets);
                     }
@@ -435,9 +431,6 @@ void write_client(void)
             dbprint("Client #%d sending message %d of %lu...\n",
                 clientID, i+1, n);
             Send(&ports[serverPort], msg);
-            // TODO client should receive an ack from the server
-            // and block until he does
-            // message_t reqACK = Receive(&ports[myPort]);
         }
         free(packets);
         debug_trace(clientID, &t);
@@ -525,7 +518,6 @@ void read_client(void)
                     packetsThisRow = header.total_num_packets;
                     seqNum = header.sequence_number; 
                     start_position = seqNum * PAYLOAD_SIZE;
-                    // TODO client should ACK the server's send
                     if(tableRow < TABLE_ENTRIES){
                         clientTable[tableRow].len = header.total_num_packets * PAYLOAD_SIZE;      
                         dbprint("Client #%d received table[%d], pkt %d/%d, tot=%d\n", 
@@ -542,7 +534,7 @@ void read_client(void)
                 }while(pktRcvThisRow < packetsThisRow);
             }while(msg.payload[0].header.morePkts == true );
             debug_trace(clientID, &t); 
-            printf("Client #%d ", clientID);
+            printf("\nClient #%d ", clientID);
             print_table(clientTable, TABLE_ENTRIES);
         }else{
             // always yield unless the "magic number" has been hit
@@ -687,8 +679,6 @@ printf(ANSI_COLOR_GREEN "without\n\tchanging code. " ANSI_COLOR_RESET);
 printf("In C, this is a good pattern for code reuse, while allowing \n"
 "\tus to satisfy the requirement of not changing the message implementation.\n\n");
 
-    // TODO implement per-row reads: 
-    // printf("\tRead(i):    TODO: read out the contents of a specified row of the table\n\n");
     printf("Spawning %d servers listening on ports 0 to %d\n", NUM_SERVERS, NUM_SERVERS-1);
     printf("Spawning %d clients with receive ports %d to %d\n\n", NUM_CLIENTS, NUM_SERVERS, NUM_SERVERS+NUM_CLIENTS-1);
     printf("Press 'Enter' to continue:\n");
