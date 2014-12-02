@@ -1,6 +1,12 @@
 /*******************************************************************************
  * FILENAME:    cl-svr.c
  * DESCRIPTION: Test program for message passing system for RPC behavior
+ *
+ * This implementation uses "header file polymorphism" which uses typedefs to
+ * switch the underlying type of the queues, and messages. In lieu of C++
+ * style templates this allows us to parameterize the functions without
+ * changing code. In C this is a good pattern for code reuse, while allowing us to
+ * satisfy the requirement of not changing the message implementation.
  * AUTHOR:      Jeremy Wright, Matt Welch
  * SCHOOL:      Arizona State University
  * CLASS:       CSE531: Distributed and Multiprocessor Operating Systems
@@ -264,7 +270,7 @@ void server(void)
     const size_t myTID = tid(CurrQ(&RunQ));
     const port_id_t myPort = getNextServerPort();
     chunk_t serverTable[TABLE_ENTRIES];
-    message_t [] pendingRequestBuffer;
+    message_t pendingRequestBuffer[2];
     
     printf("Starting server[TID=%lu], listening on port %u !\n", myTID, myPort);
 
@@ -704,6 +710,17 @@ int main(int argc, const char *argv[])
     printf("\tAdd(i,msg): add a string to the table at a specific index, overwriting the contents of that row\n");
     printf("\tDelete(i):  remove the contents of the table at a specific index\n");
     printf("\tRead:       read out the entire contents of the table\n");
+
+
+    printf("\n\tThis implementation uses ");
+    printf(ANSI_COLOR_GREEN "header file polymorphism " ANSI_COLOR_RESET); 
+    printf("which uses typedefs to\n"
+"\tswitch the underlying type of the queues, and messages. In lieu of C++\n"
+"\tstyle templates this allows us to parameterize the functions ");
+printf(ANSI_COLOR_GREEN "without\n\tchanging code. " ANSI_COLOR_RESET);
+printf("In C, this is a good pattern for code reuse, while allowing \n"
+"\tus to satisfy the requirement of not changing the message implementation.\n\n");
+
     // TODO implement per-row reads: 
     // printf("\tRead(i):    TODO: read out the contents of a specified row of the table\n\n");
     printf("Spawning %d servers listening on ports 0 to %d\n", NUM_SERVERS, NUM_SERVERS-1);
