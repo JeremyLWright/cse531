@@ -72,7 +72,7 @@ typedef packet_t message_value_type; //Set the port to handle an array of packet
 #define NUM_CLIENTS 2  // should not exceed NUM_PORTS - NUM_SERVERS
 #define TABLE_ENTRIES 10 // number of rows in the string table
 const size_t MAX_STRING_SIZE = 4096;
-#define THREAD_DELAY 100000 
+#define THREAD_DELAY 100000
 #include "msgs.h"
 #include <assert.h>
 #include <unistd.h>
@@ -664,25 +664,17 @@ int main(int argc, const char *argv[])
     initrand();
 
     printf("\nBegin client-server string storage test program\n");
-    printf("Currently implemented multi-packet strings and working on client read\n");
+    printf("Written by: \n"
+            ANSI_COLOR_GREEN "\tJames (Matt) Welch\n" ANSI_COLOR_RESET
+            "\t&\n"
+            ANSI_COLOR_GREEN "\tJeremy Wright\n" ANSI_COLOR_RESET);
+    printf("Currently implemented multi-packet strings and with randomized client read\n");
     printf("Server stores a table of strings (%d) and supports the following operations: \n", TABLE_ENTRIES);
     printf("\tAdd(i,msg): add a string to the table at a specific index, overwriting the contents of that row\n");
     printf("\tDelete(i):  remove the contents of the table at a specific index\n");
     printf("\tRead:       read out the entire contents of the table\n");
 
-
-    printf("\n\tThis implementation uses ");
-    printf(ANSI_COLOR_GREEN "header file polymorphism " ANSI_COLOR_RESET); 
-    printf("which uses typedefs to\n"
-"\tswitch the underlying type of the queues, and messages. In lieu of C++\n"
-"\tstyle templates this allows us to parameterize the functions ");
-printf(ANSI_COLOR_GREEN "without\n\tchanging code. " ANSI_COLOR_RESET);
-printf("In C, this is a good pattern for code reuse, while allowing \n"
-"\tus to satisfy the requirement of not changing the message implementation.\n\n");
-
-    printf("Spawning %d servers listening on ports 0 to %d\n", NUM_SERVERS, NUM_SERVERS-1);
-    printf("Spawning %d clients with receive ports %d to %d\n\n", NUM_CLIENTS, NUM_SERVERS, NUM_SERVERS+NUM_CLIENTS-1);
-    printf("Press 'Enter' to continue:\n");
+    printf("\nPress " ANSI_COLOR_RED "'Enter'" ANSI_COLOR_RESET " to continue:\n");
     getchar();
 
     InitQ(&RunQ);
