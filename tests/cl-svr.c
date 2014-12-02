@@ -279,6 +279,16 @@ bool in_exclusive_mode(current_session_port)
     return current_session_port != INVALID_PORT_NUMBER;
 }
 
+message_t make_exclusive_mode(int session_port)
+{
+        //Switch ports to go to exclusive mode
+        message_t msg;
+        msg.payload_size = 1;
+        msg.payload[0].header.command = SwitchPort;
+        msg.payload[0].header.idx = session_port;
+        return msg;
+}
+
 
 void server(void)
 {// server should listen on his own port only
@@ -363,10 +373,17 @@ void server(void)
                 break;
 
             case SwitchPort:
-                printf("Client requested session port: %d\n", recvd.payload[0].header.idx);
-                current_session_port = recvd.payload[0].header.idx;
-                exit(EXIT_FAILURE);
-                 
+                {
+                message_t msg = make_exclusive_mode(myPort);
+                if(recvd.payload[0].header.idx == myPort)
+                {
+                    current_session_port = INVALID_PORT_NUMBER;
+                }
+                else
+                {
+                    current_session_port = recvd.payload[0].header.idx;
+                }
+                }
                 break;
             case Read:
                 {
@@ -394,7 +411,7 @@ void server(void)
                             msg.payload[0].header.morePkts = true;
                             msg.payload[0].header.total_num_packets = 1;
                             // TODO should memset the payload here too
-                            Send(&ports[dest], msg);
+                            Send(&ports[current_session_port], msg);
                             totalPktsSent++;
                         }
                         // TODO server should wait for ACK from client
@@ -409,7 +426,7 @@ void server(void)
                             msg.payload[0].header.idx = j;
                             msg.payload[0].header.command = Read;
                             //fprintf(stderr, "Sending to: %d\n", dest);
-                            Send(&ports[dest], msg);
+                            Send(&ports[current_session_port], msg);
                             totalPktsSent++;
                             // TODO server should wait for ACK from client
                         }
@@ -424,7 +441,7 @@ void server(void)
                     msg.payload[0].header.idx = 100;
                     msg.payload[0].header.morePkts = false;
                     msg.payload[0].header.command = Read;
-                    Send(&ports[dest], msg);
+                    Send(&ports[current_session_port], msg);
                     free(lastPacket);
                     dbprint("Server completed <%u> request, total=%d\n", 
                             clientCommand, totalPktsSent);
@@ -436,17 +453,6 @@ void server(void)
     }
 }
 
-message_t make_exclusive_mode(int session_port, int client_id)
-{
-        //Switch ports to go to exclusive mode
-        message_t msg;
-        msg.payload_size = 1;
-        msg.payload[0].header.command = SwitchPort;
-        msg.payload[0].header.idx = session_port;
-        printf("Client #%d switching to exclusive mode on port %d\n",
-                client_id, session_port);
-        return msg;
-}
 
 
 void write_client(void)
@@ -462,9 +468,9 @@ void write_client(void)
     char msg[WRITE_SIZE+1];
     int i;
     int tableIdx = 0;
-    const int my_session_port = NUM_PORTS - clientID;
+    const int my_session_port = getNextClientPort();
     //printf("Start client[%lu], with receive port %u !\n", myTID, myPort);
-    printf("Starting Client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
+    printf("Starting Client #%d [TID=%lu], with receive port %u and session port %u!\n", clientID, myTID, myPort, my_session_port);
     memset(msg, 0, sizeof(msg));
     while(1)
     {
@@ -499,9 +505,10 @@ void write_client(void)
 #if 0
         sem_wait(clientID, &tableMutex);
 #else
-        message_t ex = make_exclusive_mode(my_session_port, clientID);
+        yield();
+        message_t ex = make_exclusive_mode(my_session_port);
         Send(&ports[serverPort], ex);
-        Receive(&ports[my_session_port]);
+        //Receive(&ports[my_session_port]);
         printf("Client #%d Receiving to exclusive mode Port %d\n",
                 clientID, my_session_port);
 #endif
@@ -519,7 +526,7 @@ void write_client(void)
             memcpy(msg.payload, &packets[i], sizeof(message_value_type));
             dbprint("Client #%d sending message %d of %lu...\n",
                 clientID, i+1, n);
-            Send(&ports[serverPort], msg);
+            Send(&ports[my_session_port], msg);
             // TODO client should receive an ack from the server
             // and block until he does
             // message_t reqACK = Receive(&ports[myPort]);
@@ -528,6 +535,10 @@ void write_client(void)
 #if 0
         // unlock the table so that the other clients may access it TODO remove the lock
         sem_signal(clientID, &tableMutex);
+#else
+        message_t r = make_exclusive_mode(serverPort);
+        Send(&ports[my_session_port], r);
+        //Receive(&ports[serverPort]);
 #endif
 
         // this needs to be random, per spec: 
@@ -545,6 +556,7 @@ void read_client(void)
     const size_t myTID = tid(CurrQ(&RunQ));
     const int clientID = 3;
     const port_id_t myPort = getNextClientPort();
+    const int my_session_port = getNextClientPort();
     const port_id_t serverPort = chooseServer();
     //port_id_t destPort = 0; 
     int payload[message_size];
@@ -569,7 +581,7 @@ void read_client(void)
     }
     
     yield();
-    printf("Starting Client #%d [TID=%lu], with receive port %u !\n", clientID, myTID, myPort);
+    printf("Starting Client #%d [TID=%lu], with receive port %u and session port %u!\n", clientID, myTID, myPort, my_session_port);
     
     while(1)
     {
@@ -589,8 +601,15 @@ void read_client(void)
 #if 0
             // lock table so that no other clients may write while this one is reading
             sem_wait(clientID, &tableMutex); 
+#else
+            yield();
+            message_t ex = make_exclusive_mode(my_session_port);
+            Send(&ports[serverPort], ex);
+          //  Receive(&ports[my_session_port]);
+            printf("Client #%d Receiving to exclusive mode Port %d\n",
+                    clientID, my_session_port);
 #endif
-            Send(&ports[serverPort], msg);
+            Send(&ports[my_session_port], msg);
             printf("Client #%d sent Read request to server...\n", clientID);
             vbprint("Client #%d waiting on receive from server...\n", clientID);
             // Receive the first message for the first row of the table
@@ -608,7 +627,7 @@ void read_client(void)
                 int packetsThisRow = 0;
                 do{// this inner do-while represents the multiple packets of a single row
                     // CAUTION: this assumes that packets of a given row will arrive in order
-                    msg = Receive(&ports[myPort]);
+                    msg = Receive(&ports[my_session_port]);
                     pktRcvThisRow++;
                     totalPktsRcv++;
                     header_t header = msg.payload[0].header;
@@ -635,6 +654,11 @@ void read_client(void)
 #if 0
             // unlock table so that other clients may write
             sem_signal(clientID, &tableMutex); 
+#else
+
+            message_t r = make_exclusive_mode(serverPort);
+            Send(&ports[my_session_port], r);
+           // Receive(&ports[serverPort]);
 #endif
             printf("Client #%d ", clientID);
             print_table(clientTable, TABLE_ENTRIES);
@@ -647,122 +671,11 @@ void read_client(void)
     }
 
 }
-// Built in Self Test 
-
-int test_chunker()
-{
-    char msg1[]=
-        "This is a long m" 
-        "essage that talk"
-        "s about all the "
-        "stuff and doesn'"
-        "t talk about not"
-        "hing. That's rig"
-        "ht its the messa"
-        "ge.";
-
-    size_t num_chunks = 0;
-    chunk_t* c = make_chunks(msg1, sizeof(msg1), &num_chunks);
-    assert(num_chunks == 8);
-
-    assert(c[0].start[0] == 'T');
-    assert(c[0].len == PAYLOAD_SIZE);
-
-    assert(c[1].start[0] == 'e');
-    assert(c[1].len == PAYLOAD_SIZE);
-
-    assert(c[2].start[0] == 's');
-    assert(c[2].len == PAYLOAD_SIZE);
-
-    assert(c[3].start[0] == 's');
-    assert(c[3].len == PAYLOAD_SIZE);
-
-    assert(c[4].start[0] == 't');
-    assert(c[4].len == PAYLOAD_SIZE);
-
-    assert(c[5].start[0] == 'h');
-    assert(c[5].len == PAYLOAD_SIZE);
-
-    assert(c[6].start[0] == 'h');
-    assert(c[6].len == PAYLOAD_SIZE);
-
-    assert(c[7].start[0] == 'g');
-    assert(c[7].len == 4); //3 + the null
-    free(c);
-
-    return EXIT_SUCCESS;
-
-}
-
-int test_packets01()
-{
-    const char msg[]=
-        "Brian Fantana: I"
-        " think I was in "
-        "love once.      "
-        "Ron Burgundy: Re"
-        "ally? What was h"
-        "er name?        "
-        "Brian Fantana: I"
-        " don't remember."
-        " Ron Burgundy: T"
-        "hat's not a good"
-        " start, but keep"
-        " going.         "
-        "Brian Fantana: S"
-        "he was Brazilian"
-        ", or Chinese, or"
-        " something weird"
-        ". I met her in t"
-        "he bathroom of a"
-        " K-Mart and we m"
-        "ade love for hou"
-        "rs. Then we part"
-        "ed ways, never t"
-        "o see each other"
-        " again.         "
-        "Ron Burgundy: I'"
-        "m pretty sure th"
-        "at's not love.  "
-        "Brian Fantana: D"
-        "amn it!";
-    size_t num_packets = 0;
-    packet_t* packets = make_packet(
-            msg, 
-            sizeof(msg), 
-            1,
-            6,
-            &num_packets);
-    assert(num_packets == 29);
-    assert(packets[28].header.sequence_number == 28);
-    assert(packets[0].header.sequence_number == 0);
-    assert(packets[28].header.total_num_packets == 29);
-    assert(packets[0].header.total_num_packets== 29);
-    assert(packets[28].payload.len == 8);
-    assert(packets[0].payload.len == PAYLOAD_SIZE);
-
-    return EXIT_SUCCESS;
-}
-
-
-int do_tests()
-{
-    assert(test_chunker() == 0 && "Chunker Failed.");
-    assert(test_packets01() == 0 && "Packets failed");
-
-    printf("All tests passed.\n");
-    return EXIT_SUCCESS;
-}
-
-//End Build in tests
-
 
 int main(int argc, const char *argv[])
 {
     int i;
     initrand();
-
-    assert(do_tests() == 0 && "Tests Failed.");
 
     printf("\nBegin client-server string storage test program\n");
     printf("Currently implemented multi-packet strings and working on client read\n");
