@@ -595,35 +595,38 @@ int test_chunker()
 int test_packets01()
 {
     const char msg[]=
-        "Brian Fantana: I"
-        " think I was in "
-        "love once.      "
-        "Ron Burgundy: Re"
-        "ally? What was h"
-        "er name?        "
-        "Brian Fantana: I"
-        " don't remember."
-        " Ron Burgundy: T"
-        "hat's not a good"
-        " start, but keep"
-        " going.         "
-        "Brian Fantana: S"
-        "he was Brazilian"
-        ", or Chinese, or"
-        " something weird"
-        ". I met her in t"
-        "he bathroom of a"
-        " K-Mart and we m"
-        "ade love for hou"
-        "rs. Then we part"
-        "ed ways, never t"
-        "o see each other"
-        " again.         "
-        "Ron Burgundy: I'"
-        "m pretty sure th"
-        "at's not love.  "
-        "Brian Fantana: D"
-        "amn it!";
+"Integer dictum elementum orci, in dictum enim condimentum non. Proin"
+"tincidunt, magna nec pellentesque elementum, tellus ligula convallis orci, in"
+"finibus justo eros a diam. Vestibulum consequat, nibh vitae mollis dapibus,"
+"ligula elit euismod leo, eget auctor felis tellus ut nisi. Sed"
+"volutpat congue lorem, vel vulputate orci tristique eu. Vestibulum"
+"ac magna mi. Nunc auctor aliquet tellus eget semper. Curabitur"
+"pretium enim ante, at fermentum orci posuere a."
+"Vestibulum posuere placerat mauris et vulputate. Sed id lacinia leo, nec"
+"interdum magna. Vestibulum interdum, nulla et feugiat pulvinar, dolor sapien"
+"blandit lacus, eu rutrum erat nisi et nulla. Vestibulum gravida pulvinar"
+"nulla, sed condimentum sem fermentum vel. Fusce quis faucibus tellus, vel"
+"vehicula ante. Mauris eleifend, enim eu lacinia ornare, nibh diam vestibulum"
+"nibh, et dapibus enim metus mollis tortor. Quisque eu vehicula tellus. Cras"
+"vehicula odio convallis porttitor eleifend. Donec sollicitudin elit eget urna"
+"gravida, vel rutrum neque aliquam."
+"Etiam in dignissim purus. Etiam lobortis orci ac sem faucibus, non venenatis"
+"urna condimentum. Vivamus id urna quis metus vehicula elementum eu id augue."
+"Suspendisse a magna tempus, facilisis dolor non, mattis lacus. Vestibulum sem"
+"felis, fringilla eget rhoncus quis, dictum at dui. Mauris eget mi nec libero"
+"efficitur aliquet vel placerat diam. Mauris pulvinar nunc ut sapien fermentum"
+"congue. Cras eu dapibus odio. Nam euismod lorem in leo egestas, non suscipit"
+"nulla consequat. Nulla nec laoreet eros. In congue fringilla est, eget"
+"molestie dui lobortis ac. Sed ac metus consequat orci dignissim ultricies."
+"Curabitur dictum est eros, a interdum ex porttitor ac. Nullam non velit quis"
+"tellus suscipit sodales non vitae quam. Mauris ac sagittis nunc. Vestibulum"
+"vestibulum risus at blandit tincidunt. Vestibulum dictum lorem vel diam"
+"ullamcorper, a mollis odio rhoncus. Sed convallis, velit eu lobortis mattis,"
+"ante urna molestie libero, vel posuere lacus justo nec dui. Donec feugiat,"
+"ligula quis eleifend pretium, tellus nulla commodo turpis, quis rutrum enim"
+"orci et lacus. Nulla sit amet augue leo. Donec semper pretium mi, nec"
+"vehicula magna accumsan et. Fusce vulputate volutpat suscipit. Proin nec"
+"nisi sed nisl egestas semper.";
     size_t num_packets = 0;
     packet_t* packets = make_packet(
             msg, 
@@ -659,8 +662,6 @@ int main(int argc, const char *argv[])
 {
     int i;
     initrand();
-
-    assert(do_tests() == 0 && "Tests Failed.");
 
     printf("\nBegin client-server string storage test program\n");
     printf("Currently implemented multi-packet strings and working on client read\n");
