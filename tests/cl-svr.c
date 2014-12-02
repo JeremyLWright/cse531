@@ -84,9 +84,6 @@ Port_t ports[NUM_PORTS];
 port_id_t g_next_server_port = 0;
 port_id_t g_next_client_port = NUM_SERVERS;
 int g_next_client_ID=1;
-#if 0
-semaphore_t tableMutex;
-#endif
 
 typedef struct _chunk_t {
     size_t len;
@@ -187,39 +184,48 @@ void sem_signal(int client, semaphore_t* sem){
 ////////////////////////
 
 const char st_crispin_day[]="\
-That he which hath no stomach to this fight,\
-Let him depart; his passport shall be made,\
-And crowns for convoy put into his purse;\
-We would not die in that man's company\
-That fears his fellowship to die with us.\
-This day is call'd the feast of Crispian.\
-He that outlives this day, and comes safe home,\
-Will stand a tip-toe when this day is nam’d,\
-And rouse him at the name of Crispian.\
-He that shall live this day, and see old age,\
-Will yearly on the vigil feast his neighbours,\
-And say 'To-morrow is Saint Crispian.'\
-Then will he strip his sleeve and show his scars,\
-And say 'These wounds I had on Crispian’s day.'\
-Old men forget; yet all shall be forgot,\
-But he’ll remember, with advantages,\
-What feats he did that day. Then shall our names,\
-Familiar in his mouth as household words-\
-Harry the King, Bedford and Exeter,\
-Warwick and Talbot, Salisbury and Gloucester-\
-Be in their flowing cups freshly rememb’red.\
-This story shall the good man teach his son;\
-And Crispin Crispian shall ne'er go by,\
-From this day to the ending of the world,\
-But we in it shall be remembered-\
-We few, we happy few, we band of brothers;\
-For he to-day that sheds his blood with me\
-Shall be my brother; be he ne'er so vile,\
-This day shall gentle his condition;\
-And gentlemen in England now-a-bed\
-Shall think themselves accurs'd they were not here,\
-And hold their manhoods cheap whiles any speaks\
-That fought with us upon Saint Crispin's day.";\
+Integer dictum elementum orci, in dictum enim condimentum non. Proin\
+tincidunt, magna nec pellentesque elementum, tellus ligula convallis orci, in\
+finibus justo eros a diam. Vestibulum consequat, nibh vitae mollis dapibus,\
+ligula elit euismod leo, eget auctor felis tellus ut nisi. Sed\
+volutpat congue lorem, vel vulputate orci tristique eu. Vestibulum ac\
+magna mi. Nunc auctor aliquet tellus eget semper. Curabitur pretium\
+enim ante, at fermentum orci posuere a.\
+Vestibulum posuere placerat mauris et vulputate. Sed id lacinia leo, nec\
+interdum magna. Vestibulum interdum, nulla et feugiat pulvinar, dolor sapien\
+blandit lacus, eu rutrum erat nisi et nulla. Vestibulum gravida pulvinar\
+nulla, sed condimentum sem fermentum vel. Fusce quis faucibus tellus, vel\
+vehicula ante. Mauris eleifend, enim eu lacinia ornare, nibh diam vestibulum\
+nibh, et dapibus enim metus mollis tortor. Quisque eu vehicula tellus. Cras\
+vehicula odio convallis porttitor eleifend. Donec sollicitudin elit eget urna\
+gravida, vel rutrum neque aliquam.\
+Etiam in dignissim purus. Etiam lobortis orci ac sem faucibus, non venenatis\
+urna condimentum. Vivamus id urna quis metus vehicula elementum eu id augue.\
+Suspendisse a magna tempus, facilisis dolor non, mattis lacus. Vestibulum sem\
+felis, fringilla eget rhoncus quis, dictum at dui. Mauris eget mi nec libero\
+efficitur aliquet vel placerat diam. Mauris pulvinar nunc ut sapien fermentum\
+congue. Cras eu dapibus odio. Nam euismod lorem in leo egestas, non suscipit\
+nulla consequat. Nulla nec laoreet eros. In congue fringilla est, eget\
+molestie dui lobortis ac. Sed ac metus consequat orci dignissim ultricies.\
+Curabitur dictum est eros, a interdum ex porttitor ac. Nullam non velit quis\
+tellus suscipit sodales non vitae quam. Mauris ac sagittis nunc. Vestibulum\
+vestibulum risus at blandit tincidunt. Vestibulum dictum lorem vel diam\
+ullamcorper, a mollis odio rhoncus. Sed convallis, velit eu lobortis mattis,\
+ante urna molestie libero, vel posuere lacus justo nec dui. Donec feugiat,\
+ligula quis eleifend pretium, tellus nulla commodo turpis, quis rutrum\
+enim orci et lacus. Nulla sit amet augue leo. Donec semper pretium mi, nec\
+vehicula magna accumsan et. Fusce vulputate volutpat suscipit. Proin nec\
+nisi sed nisl egestas semper." "Nullam leo odio, consectetur vel mauris\
+et, pellentesque pulvinar ex. Nulla eget dolor ac nunc auctor mollis. In\
+efficitur fringilla est, nec facilisis arcu commodo et. Etiam condimentum\
+nunc ac neque vehicula, eu viverra sapien euismod. Nam vitae orci\
+placerat, dapibus ante nec, maximus tellus. Etiam mauris elit, eleifend\
+vel mattis a, rutrum non mauris. Phasellus pretium pellentesque massa eu\
+tempus. Nullam aliquet sem a turpis sagittis, eu varius justo suscipit.\
+Sed id condimentum nulla. Etiam convallis lacinia sem id vulputate. Aenean\
+a tristique mi. Sed ligula ipsum, consectetur a tortor vel, hendrerit\
+sagittis tortor. Maecenas vulputate lacus et diam dictum, nec pharetra\
+lectus rhoncus. Suspendisse porttitor pellentesque dapibus.";
 
 int randint(int max) {
     int randomNumber = (int)rand();
@@ -260,7 +266,7 @@ void print_table(chunk_t* table, size_t len)
     printf("Printing String Table:\n");
     for(i = 0; i < len; ++i)
     {
-        printf("\t[%d] Length: %lu\t- <%s>\n", i, table[i].len, table[i].start);
+        printf("\t[%d] <%s>\n", i, table[i].start);
     }
 }
 
@@ -452,10 +458,6 @@ void write_client(void)
         // "Client 1 and client 2, add/delete or modify the strings, at random."
         // random behavior will cause race conditions so need locks on the table rows
         tableIdx = current_msg % TABLE_ENTRIES;
-        // lock table access here so only one client may modify the table at a time
-#if 0
-        sem_wait(clientID, &tableMutex);
-#endif
         printf("Client #%d sending, row %d: <%s>\n",
                 clientID, tableIdx,msg);
         for(i = 0; i < n; ++i)
@@ -475,10 +477,6 @@ void write_client(void)
             // message_t reqACK = Receive(&ports[myPort]);
         }
         free(packets);
-#if 0
-        // unlock the table so that the other clients may access it TODO remove the lock
-        sem_signal(clientID, &tableMutex);
-#endif
 
         // this needs to be random, per spec: 
         // "Client 1 and client 2, add/delete or modify the strings, at random."
@@ -536,10 +534,6 @@ void read_client(void)
             packet.header.dest_port = serverPort;
 
             memcpy(msg.payload, &packet, sizeof(message_value_type));
-#if 0
-            // lock table so that no other clients may write while this one is reading
-            sem_wait(clientID, &tableMutex); 
-#endif
             Send(&ports[serverPort], msg);
             printf("Client #%d sent Read request to server...\n", clientID);
             vbprint("Client #%d waiting on receive from server...\n", clientID);
@@ -582,10 +576,6 @@ void read_client(void)
                     }
                 }while(pktRcvThisRow < packetsThisRow);
             }while(msg.payload[0].header.morePkts == true );
-#if 0
-            // unlock table so that other clients may write
-            sem_signal(clientID, &tableMutex); 
-#endif
             printf("Client #%d ", clientID);
             print_table(clientTable, TABLE_ENTRIES);
         }else{
@@ -597,122 +587,11 @@ void read_client(void)
     }
 
 }
-// Built in Self Test 
-
-int test_chunker()
-{
-    char msg1[]=
-        "This is a long m" 
-        "essage that talk"
-        "s about all the "
-        "stuff and doesn'"
-        "t talk about not"
-        "hing. That's rig"
-        "ht its the messa"
-        "ge.";
-
-    size_t num_chunks = 0;
-    chunk_t* c = make_chunks(msg1, sizeof(msg1), &num_chunks);
-    assert(num_chunks == 8);
-
-    assert(c[0].start[0] == 'T');
-    assert(c[0].len == PAYLOAD_SIZE);
-
-    assert(c[1].start[0] == 'e');
-    assert(c[1].len == PAYLOAD_SIZE);
-
-    assert(c[2].start[0] == 's');
-    assert(c[2].len == PAYLOAD_SIZE);
-
-    assert(c[3].start[0] == 's');
-    assert(c[3].len == PAYLOAD_SIZE);
-
-    assert(c[4].start[0] == 't');
-    assert(c[4].len == PAYLOAD_SIZE);
-
-    assert(c[5].start[0] == 'h');
-    assert(c[5].len == PAYLOAD_SIZE);
-
-    assert(c[6].start[0] == 'h');
-    assert(c[6].len == PAYLOAD_SIZE);
-
-    assert(c[7].start[0] == 'g');
-    assert(c[7].len == 4); //3 + the null
-    free(c);
-
-    return EXIT_SUCCESS;
-
-}
-
-int test_packets01()
-{
-    const char msg[]=
-        "Brian Fantana: I"
-        " think I was in "
-        "love once.      "
-        "Ron Burgundy: Re"
-        "ally? What was h"
-        "er name?        "
-        "Brian Fantana: I"
-        " don't remember."
-        " Ron Burgundy: T"
-        "hat's not a good"
-        " start, but keep"
-        " going.         "
-        "Brian Fantana: S"
-        "he was Brazilian"
-        ", or Chinese, or"
-        " something weird"
-        ". I met her in t"
-        "he bathroom of a"
-        " K-Mart and we m"
-        "ade love for hou"
-        "rs. Then we part"
-        "ed ways, never t"
-        "o see each other"
-        " again.         "
-        "Ron Burgundy: I'"
-        "m pretty sure th"
-        "at's not love.  "
-        "Brian Fantana: D"
-        "amn it!";
-    size_t num_packets = 0;
-    packet_t* packets = make_packet(
-            msg, 
-            sizeof(msg), 
-            1,
-            6,
-            &num_packets);
-    assert(num_packets == 29);
-    assert(packets[28].header.sequence_number == 28);
-    assert(packets[0].header.sequence_number == 0);
-    assert(packets[28].header.total_num_packets == 29);
-    assert(packets[0].header.total_num_packets== 29);
-    assert(packets[28].payload.len == 8);
-    assert(packets[0].payload.len == PAYLOAD_SIZE);
-
-    return EXIT_SUCCESS;
-}
-
-
-int do_tests()
-{
-    assert(test_chunker() == 0 && "Chunker Failed.");
-    assert(test_packets01() == 0 && "Packets failed");
-
-    printf("All tests passed.\n");
-    return EXIT_SUCCESS;
-}
-
-//End Build in tests
-
 
 int main(int argc, const char *argv[])
 {
     int i;
     initrand();
-
-    assert(do_tests() == 0 && "Tests Failed.");
 
     printf("\nBegin client-server string storage test program\n");
     printf("Currently implemented multi-packet strings and working on client read\n");
@@ -742,11 +621,6 @@ printf("In C, this is a good pattern for code reuse, while allowing \n"
     // Declare a set (array of ports). The ports are numbered 0 to 99.
     for(i = 0; i < NUM_PORTS; ++i)
         PortInit(&ports[i], PORT_DEPTH);
-#if 0 
-    // declare a table mutex to prevent race conditions for the clients
-    // initialize mutex to 1 so 1 client may enter the CS
-    tableMutex = CreateSem(1);   
-#endif
 
 
     start_thread(read_client);
