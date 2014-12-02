@@ -84,7 +84,9 @@ Port_t ports[NUM_PORTS];
 port_id_t g_next_server_port = 0;
 port_id_t g_next_client_port = NUM_SERVERS;
 int g_next_client_ID=1;
+#if 0
 semaphore_t tableMutex;
+#endif
 
 typedef struct _chunk_t {
     size_t len;
@@ -451,7 +453,9 @@ void write_client(void)
         // random behavior will cause race conditions so need locks on the table rows
         tableIdx = current_msg % TABLE_ENTRIES;
         // lock table access here so only one client may modify the table at a time
+#if 0
         sem_wait(clientID, &tableMutex);
+#endif
         printf("Client #%d sending, row %d: <%s>\n",
                 clientID, tableIdx,msg);
         for(i = 0; i < n; ++i)
@@ -471,8 +475,10 @@ void write_client(void)
             // message_t reqACK = Receive(&ports[myPort]);
         }
         free(packets);
+#if 0
         // unlock the table so that the other clients may access it TODO remove the lock
         sem_signal(clientID, &tableMutex);
+#endif
 
         // this needs to be random, per spec: 
         // "Client 1 and client 2, add/delete or modify the strings, at random."
@@ -530,8 +536,10 @@ void read_client(void)
             packet.header.dest_port = serverPort;
 
             memcpy(msg.payload, &packet, sizeof(message_value_type));
+#if 0
             // lock table so that no other clients may write while this one is reading
             sem_wait(clientID, &tableMutex); 
+#endif
             Send(&ports[serverPort], msg);
             printf("Client #%d sent Read request to server...\n", clientID);
             vbprint("Client #%d waiting on receive from server...\n", clientID);
@@ -574,8 +582,10 @@ void read_client(void)
                     }
                 }while(pktRcvThisRow < packetsThisRow);
             }while(msg.payload[0].header.morePkts == true );
+#if 0
             // unlock table so that other clients may write
             sem_signal(clientID, &tableMutex); 
+#endif
             printf("Client #%d ", clientID);
             print_table(clientTable, TABLE_ENTRIES);
         }else{
@@ -732,10 +742,11 @@ printf("In C, this is a good pattern for code reuse, while allowing \n"
     // Declare a set (array of ports). The ports are numbered 0 to 99.
     for(i = 0; i < NUM_PORTS; ++i)
         PortInit(&ports[i], PORT_DEPTH);
-    
+#if 0 
     // declare a table mutex to prevent race conditions for the clients
     // initialize mutex to 1 so 1 client may enter the CS
     tableMutex = CreateSem(1);   
+#endif
 
 
     start_thread(read_client);
